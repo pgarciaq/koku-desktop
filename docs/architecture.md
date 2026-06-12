@@ -68,6 +68,12 @@ koku-desktop/
 │   ├── index.html              # Settings page HTML
 │   ├── settings.css            # Minimal PatternFly-inspired styles
 │   └── settings.js             # Form logic + Tauri IPC calls to save config
+├── fonts/                      # Red Hat variable fonts (SIL OFL) for custom pages
+│   ├── RedHatDisplayVF.woff2
+│   ├── RedHatTextVF.woff2
+│   ├── RedHatMonoVF.woff2
+│   ├── (+ italic variants)
+│   └── LICENSE
 ├── about/                      # About window
 │   └── index.html              # App version, OS info, server status
 ├── splash/                     # Splash screen shown during startup
@@ -257,7 +263,21 @@ cp -r apps/koku-ui-hccm/dist/* ../koku-desktop/ui/costManagement/
 
 The `ui/` directory is `.gitignore`d -- users build it from koku-ui source or download a pre-built archive.
 
-### 9. Theme Switching (Light / Dark)
+### 9. Fonts
+
+PatternFly 6 uses the Red Hat font family (SIL Open Font License):
+
+- **Red Hat Display** -- headings
+- **Red Hat Text** -- body text
+- **Red Hat Mono** -- monospace / code
+
+**For the koku-ui SPA:** Fonts are already bundled by webpack. The on-prem build includes an `asset/resource` rule that copies `.woff2` files from `@patternfly/patternfly/assets/fonts/` into the build output. No action needed -- the `ui/` directory will contain the fonts after building.
+
+**For the custom pages** (settings, about, splash): These are separate from the koku-ui build and need fonts independently. The `fonts/` directory in the repo contains the 6 variable-weight `.woff2` files (~220KB total) plus the SIL license. The custom pages reference these via `@font-face` declarations in their shared CSS.
+
+This ensures the settings page (especially the first-launch wizard) renders with correct fonts even before the user has built koku-ui.
+
+### 10. Theme Switching (Light / Dark)
 
 koku-ui uses PatternFly 6, which supports dark mode via a single CSS class (`pf-v6-theme-dark`) on the `<html>` element. The on-prem build does not implement theme toggling -- it always runs in light mode. But the components are dark-theme-ready (charts use CSS custom properties, not hardcoded colors).
 
@@ -275,7 +295,7 @@ The proxy replaces `__KOKU_DARK_THEME__` with `true` or `false` based on the con
 - **Settings page** -- theme dropdown (Light / Dark / System). "System" follows the OS preference via `prefers-color-scheme`
 - The settings page, about page, and splash screen also respect the chosen theme
 
-### 10. About Window
+### 11. About Window
 
 A lightweight HTML page at `/_about/`, accessible via **Help > About** in the menu bar. Displays two sections:
 
@@ -302,7 +322,7 @@ The page calls two Tauri IPC commands on load:
 
 Styled consistently with the settings page (same PatternFly-inspired CSS).
 
-### 11. Platform Integrations
+### 12. Platform Integrations
 
 **Window state persistence** (`tauri-plugin-window-state`):
 Remembers window size, position, and maximized state across launches. Persists to disk automatically. Users open the app and it's exactly where they left it.
