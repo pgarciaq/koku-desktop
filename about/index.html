@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Cost Management Desktop</title>
+  <style>
+    @font-face {
+      font-family: "Red Hat Display";
+      src: url("../fonts/RedHatDisplayVF.woff2") format("woff2");
+      font-weight: 300 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Red Hat Text";
+      src: url("../fonts/RedHatTextVF.woff2") format("woff2");
+      font-weight: 300 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Red Hat Mono";
+      src: url("../fonts/RedHatMonoVF.woff2") format("woff2");
+      font-weight: 300 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root, [data-theme="light"] {
+      --color-red: #EE0000;
+      --color-bg: #F0F0F0;
+      --color-surface: #ffffff;
+      --color-text: #151515;
+      --color-text-secondary: #6A6E73;
+      --color-border: #d2d2d2;
+      --color-success: #3e8635;
+      --color-error: #c9190b;
+      --color-link: #0066cc;
+      --shadow-sm: 0 1px 2px rgba(21, 21, 21, 0.08);
+      --radius: 8px;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #151515;
+      --color-surface: #1F1F1F;
+      --color-text: #F0F0F0;
+      --color-text-secondary: #9a9ca0;
+      --color-border: #393939;
+      --color-success: #5ba352;
+      --color-error: #fe5142;
+      --color-link: #92c5f9;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Red Hat Text", system-ui, sans-serif;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--color-text);
+      background: var(--color-bg);
+    }
+
+    .page {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 2.5rem;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .header__logo {
+      flex-shrink: 0;
+      width: 3rem;
+      height: 3rem;
+    }
+
+    .header__text { flex: 1; }
+
+    .header__title {
+      margin: 0;
+      font-family: "Red Hat Display", system-ui, sans-serif;
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .header__version {
+      margin: 0.125rem 0 0;
+      font-size: 0.8125rem;
+      color: var(--color-text-secondary);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card-title {
+      margin: 0 0 1rem;
+      font-family: "Red Hat Display", system-ui, sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    dl.info-list {
+      margin: 0;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-row dt {
+      margin: 0;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      flex-shrink: 0;
+    }
+
+    .info-row dd {
+      margin: 0;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .info-row dd.mono {
+      font-family: "Red Hat Mono", monospace;
+      font-size: 0.8125rem;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+      border-radius: 4px;
+      background: var(--color-bg);
+    }
+
+    .status-dot {
+      flex-shrink: 0;
+      width: 0.625rem;
+      height: 0.625rem;
+      margin-top: 0.35rem;
+      border-radius: 50%;
+    }
+
+    .status-dot--ok { background: var(--color-success); }
+    .status-dot--error { background: var(--color-error); }
+
+    .status-text {
+      flex: 1;
+      font-size: 0.8125rem;
+    }
+
+    .status-text strong {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.125rem;
+    }
+
+    .status-text span {
+      color: var(--color-text-secondary);
+    }
+
+    .loading {
+      color: var(--color-text-secondary);
+      font-style: italic;
+    }
+
+    .page-footer {
+      text-align: center;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .page-footer a {
+      color: var(--color-link);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .page-footer a:hover { text-decoration: underline; }
+
+    .page-footer a:focus {
+      outline: 2px solid var(--color-link);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <svg class="header__logo" viewBox="0 0 32 32" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#EE0000" d="M16 4C9.4 4 4 8.6 4 14.5c0 3.2 1.5 6 3.9 7.9L6 28h20l-1.9-5.6C26.5 20.5 28 17.7 28 14.5 28 8.6 22.6 4 16 4z"/>
+        <ellipse fill="#151515" cx="16" cy="14" rx="10" ry="3.5"/>
+        <path fill="#EE0000" d="M6 28c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-1H6v1z"/>
+      </svg>
+      <div class="header__text">
+        <h1 class="header__title">Cost Management Desktop</h1>
+        <p class="header__version" id="header-version">Version …</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card" aria-labelledby="client-heading">
+        <h2 class="card-title" id="client-heading">Desktop Client</h2>
+        <dl class="info-list">
+          <div class="info-row">
+            <dt>Version</dt>
+            <dd id="client-version" class="loading">Loading…</dd>
+          </div>
+          <div class="info-row">
+            <dt>Build</dt>
+            <dd id="client-build" class="loading">Loading…</dd>
+          </div>
+          <div class="info-row">
+            <dt>OS</dt>
+            <dd id="client-os" class="loading">Loading…</dd>
+          </div>
+          <div class="info-row">
+            <dt>Runtime</dt>
+            <dd id="client-runtime" class="loading">Loading…</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="card" aria-labelledby="server-heading">
+        <h2 class="card-title" id="server-heading">Connected Server</h2>
+        <dl class="info-list">
+          <div class="info-row">
+            <dt>Server URL</dt>
+            <dd id="server-url" class="loading">Loading…</dd>
+          </div>
+          <div class="info-row">
+            <dt>Auth mode</dt>
+            <dd id="server-auth" class="loading">Loading…</dd>
+          </div>
+          <div class="info-row">
+            <dt>Modules</dt>
+            <dd id="server-modules" class="loading">Loading…</dd>
+          </div>
+        </dl>
+        <div id="connection-status" class="status-row" role="status" aria-live="polite">
+          <span class="status-dot status-dot--ok" id="status-dot" hidden></span>
+          <div class="status-text">
+            <strong id="status-label">Checking connection…</strong>
+            <span id="status-detail"></span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="page-footer">
+      <a href="#" id="arch-docs-link">Architecture Documentation</a>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
+
+      const els = {
+        headerVersion: document.getElementById("header-version"),
+        clientVersion: document.getElementById("client-version"),
+        clientBuild: document.getElementById("client-build"),
+        clientOs: document.getElementById("client-os"),
+        clientRuntime: document.getElementById("client-runtime"),
+        serverUrl: document.getElementById("server-url"),
+        serverAuth: document.getElementById("server-auth"),
+        serverModules: document.getElementById("server-modules"),
+        statusDot: document.getElementById("status-dot"),
+        statusLabel: document.getElementById("status-label"),
+        statusDetail: document.getElementById("status-detail"),
+        archDocsLink: document.getElementById("arch-docs-link")
+      };
+
+      function setText(el, text) {
+        el.textContent = text;
+        el.classList.remove("loading");
+      }
+
+      function formatAuthMode(mode) {
+        if (mode === "oidc") return "Keycloak OIDC";
+        return "Development";
+      }
+
+      function formatModules(modules) {
+        const enabled = ["HCCM"];
+        if (modules?.ros) enabled.push("ROS");
+        if (modules?.sources) enabled.push("Sources");
+        return enabled.join(", ");
+      }
+
+      function setConnectedStatus(detail) {
+        els.statusDot.hidden = false;
+        els.statusDot.className = "status-dot status-dot--ok";
+        els.statusLabel.textContent = "Connected";
+        els.statusDetail.textContent = detail;
+      }
+
+      function setErrorStatus(message) {
+        els.statusDot.hidden = false;
+        els.statusDot.className = "status-dot status-dot--error";
+        els.statusLabel.textContent = "Unreachable";
+        els.statusDetail.textContent = message;
+      }
+
+      async function loadAboutInfo() {
+        try {
+          const info = await invoke("get_about_info");
+          const version = info?.version || "—";
+          setText(els.headerVersion, "Version " + version);
+          setText(els.clientVersion, version);
+
+          const commit = info?.build?.commit || info?.commit || "—";
+          const date = info?.build?.date || info?.build_date || "";
+          setText(els.clientBuild, date ? commit + " · " + date : commit);
+
+          const osName = info?.os?.name || info?.os_name || "";
+          const osVersion = info?.os?.version || info?.os_version || "";
+          const osArch = info?.os?.arch || info?.os_arch || info?.os?.architecture || "";
+          const osParts = [osName, osVersion, osArch].filter(Boolean);
+          setText(els.clientOs, osParts.length ? osParts.join(" · ") : "—");
+
+          const tauri = info?.runtime?.tauri || info?.tauri_version || "—";
+          const webview = info?.runtime?.webview || info?.webview || "";
+          setText(els.clientRuntime, webview ? tauri + " · " + webview : tauri);
+        } catch {
+          setText(els.headerVersion, "Version —");
+          setText(els.clientVersion, "Unavailable");
+          setText(els.clientBuild, "—");
+          setText(els.clientOs, "—");
+          setText(els.clientRuntime, "—");
+        }
+      }
+
+      async function loadServerStatus() {
+        try {
+          const status = await invoke("get_server_status");
+
+          setText(els.serverUrl, status?.server_url || status?.serverUrl || "—");
+          setText(els.serverAuth, formatAuthMode(status?.auth_mode || status?.authMode || "dev"));
+          setText(els.serverModules, formatModules(status?.modules));
+
+          if (status?.connected === false || status?.error) {
+            setErrorStatus(status?.error || status?.message || "Unable to reach the server");
+            return;
+          }
+
+          const parts = [];
+          if (status?.latency_ms != null) {
+            parts.push(status.latency_ms + " ms");
+          } else if (status?.latency != null) {
+            parts.push(status.latency + " ms");
+          }
+
+          const version = status?.version || status?.cost_management_version;
+          if (version) parts.push("v" + version);
+
+          const commit = status?.commit || status?.git_commit;
+          if (commit) parts.push(commit);
+
+          const python = status?.python_version || status?.python;
+          if (python) parts.push("Python " + python);
+
+          setConnectedStatus(parts.length ? parts.join(" · ") : "Server is reachable");
+        } catch (err) {
+          setText(els.serverUrl, "—");
+          setText(els.serverAuth, "—");
+          setText(els.serverModules, "—");
+          setErrorStatus(err?.message || String(err));
+        }
+      }
+
+      async function openArchitectureDocs(event) {
+        event.preventDefault();
+        const url = "https://docs.redhat.com/en/documentation/cost_management_service/";
+        try {
+          if (window.__TAURI__?.opener?.openUrl) {
+            await window.__TAURI__.opener.openUrl(url);
+          } else {
+            await invoke("plugin:opener|open_url", { url });
+          }
+        } catch {
+          window.open(url, "_blank");
+        }
+      }
+
+      function resolveTheme(theme) {
+        if (theme === "system") {
+          return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        return theme || "light";
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", resolveTheme(theme));
+      }
+
+      async function loadTheme() {
+        try {
+          const config = await invoke("get_config");
+          if (config?.theme) applyTheme(config.theme);
+        } catch {
+          applyTheme("system");
+        }
+      }
+
+      els.archDocsLink.addEventListener("click", openArchitectureDocs);
+
+      loadTheme();
+      loadAboutInfo();
+      loadServerStatus();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=400, height=300">
+  <title>Cost Management</title>
+  <style>
+    @font-face {
+      font-family: "Red Hat Display";
+      src: url("../fonts/RedHatDisplayVF.woff2") format("woff2");
+      font-weight: 300 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 400px;
+      height: 300px;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #151515;
+      font-family: "Red Hat Display", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1.5rem;
+    }
+
+    .splash__logo {
+      width: 72px;
+      height: auto;
+      display: block;
+    }
+
+    .splash__title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+      color: #ffffff;
+      letter-spacing: 0.01em;
+    }
+
+    .splash__spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-top-color: #EE0000;
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .splash__status {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: #9a9ca0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <img class="splash__logo" src="logo.png" width="72" height="72" alt="Red Hat">
+    <p class="splash__title">Cost Management</p>
+    <div class="splash__spinner" role="status" aria-label="Loading"></div>
+    <p class="splash__status" id="status-message">Starting…</p>
+  </div>
+</body>
+</html>

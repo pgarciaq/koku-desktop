@@ -1,0 +1,22 @@
+# Build output
+/target/
+/src-tauri/target/
+
+# Pre-built koku-ui static files (built from koku-ui repo)
+/ui/
+
+# Tauri generated
+/src-tauri/gen/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
