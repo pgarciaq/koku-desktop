@@ -1,0 +1,40 @@
+[default]
+description = "Default permissions for app IPC commands"
+permissions = [
+    "allow-get-config",
+    "allow-save-config",
+    "allow-test-connection",
+    "allow-get-about-info",
+    "allow-get-server-status",
+    "allow-quit-app",
+]
+
+[[permission]]
+identifier = "allow-get-config"
+description = "Allow reading the app configuration"
+commands.allow = ["get_config"]
+
+[[permission]]
+identifier = "allow-save-config"
+description = "Allow saving the app configuration"
+commands.allow = ["save_config"]
+
+[[permission]]
+identifier = "allow-test-connection"
+description = "Allow testing the server connection"
+commands.allow = ["test_connection"]
+
+[[permission]]
+identifier = "allow-get-about-info"
+description = "Allow reading about/build information"
+commands.allow = ["get_about_info"]
+
+[[permission]]
+identifier = "allow-get-server-status"
+description = "Allow checking the server status"
+commands.allow = ["get_server_status"]
+
+[[permission]]
+identifier = "allow-quit-app"
+description = "Allow quitting the application"
+commands.allow = ["quit_app"]

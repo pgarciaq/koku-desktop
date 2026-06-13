@@ -38,6 +38,7 @@ impl ProxyServer {
     ) -> Result<Self> {
         let client = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
+            .danger_accept_invalid_certs(true)
             .build()
             .context("building HTTP client for reverse proxy")?;
 
@@ -180,6 +181,7 @@ async fn proxy_api(state: ProxyState, request: Request) -> Response {
     };
 
     let status = StatusCode::from_u16(upstream.status().as_u16()).unwrap_or(StatusCode::OK);
+    let upstream_headers = upstream.headers().clone();
     let upstream_body = match upstream.bytes().await {
         Ok(bytes) => bytes,
         Err(err) => {
@@ -190,7 +192,7 @@ async fn proxy_api(state: ProxyState, request: Request) -> Response {
 
     let mut response = Response::new(Body::from(upstream_body));
     *response.status_mut() = status;
-    for (name, value) in upstream.headers().iter() {
+    for (name, value) in upstream_headers.iter() {
         if name == header::TRANSFER_ENCODING || name == header::CONNECTION {
             continue;
         }
@@ -264,30 +266,343 @@ async fn serve_path(state: &ProxyState, path: &Path, inject_theme: bool) -> Resp
 }
 
 fn inject_theme_script(html_bytes: &[u8], config: &AppConfig) -> Vec<u8> {
-    let script = theme_script(config);
+    let head_injection = build_head_injection(config);
     let html = String::from_utf8_lossy(html_bytes);
     let injected = if let Some(pos) = html.find("</head>") {
-        let mut out = String::with_capacity(html.len() + script.len());
+        let mut out = String::with_capacity(html.len() + head_injection.len());
         out.push_str(&html[..pos]);
-        out.push_str(&script);
+        out.push_str(&head_injection);
         out.push_str(&html[pos..]);
         out
     } else {
-        format!("{script}{html}")
+        format!("{head_injection}{html}")
     };
     injected.into_bytes()
 }
 
-fn theme_script(config: &AppConfig) -> String {
+fn build_head_injection(config: &AppConfig) -> String {
     let toggle_expr = match config.theme {
-        Theme::Light => "false".to_string(),
-        Theme::Dark => "true".to_string(),
-        Theme::System => {
-            "window.matchMedia('(prefers-color-scheme: dark)').matches".to_string()
-        }
+        Theme::Light => "false",
+        Theme::Dark => "true",
+        Theme::System => "window.matchMedia('(prefers-color-scheme: dark)').matches",
     };
+
     format!(
-        "<script>document.documentElement.classList.toggle('pf-v6-theme-dark', {toggle_expr});</script>"
+        r##"
+<script>document.documentElement.classList.toggle('pf-v6-theme-dark', {toggle_expr});</script>
+<style>
+:root {{
+  --kd-h: 36px;
+  --kd-bar-bg: #f0f0f0;
+  --kd-bar-fg: #1b1d21;
+  --kd-bar-fg2: #6a6e73;
+  --kd-bar-hover: rgba(0,0,0,.08);
+  --kd-bar-brd: #d2d2d2;
+  --kd-dd-bg: #fff;
+  --kd-dd-fg: #1b1d21;
+  --kd-dd-hover-bg: #3574f0;
+  --kd-dd-hover-fg: #fff;
+  --kd-dd-brd: #d2d2d2;
+  --kd-dd-shortcut: #6a6e73;
+}}
+.pf-v6-theme-dark {{
+  --kd-bar-bg: #212427;
+  --kd-bar-fg: #e0e0e0;
+  --kd-bar-fg2: #999;
+  --kd-bar-hover: rgba(255,255,255,.1);
+  --kd-bar-brd: #3c3f42;
+  --kd-dd-bg: #2b2d30;
+  --kd-dd-fg: #ddd;
+  --kd-dd-hover-bg: #3574f0;
+  --kd-dd-hover-fg: #fff;
+  --kd-dd-brd: #444;
+  --kd-dd-shortcut: #888;
+}}
+
+/* === when masthead becomes our bar === */
+.pf-v6-c-masthead.kd-merged {{
+  position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important;
+  height: var(--kd-h) !important; min-height: var(--kd-h) !important;
+  max-height: var(--kd-h) !important;
+  z-index: 999999 !important;
+  display: flex !important; align-items: center !important;
+  background: var(--kd-bar-bg) !important; color: var(--kd-bar-fg) !important;
+  padding: 0 !important; margin: 0 !important;
+  border-bottom: 1px solid var(--kd-bar-brd) !important;
+  font: 500 12px/1 "RedHatText","Red Hat Text",system-ui,sans-serif;
+  user-select: none; -webkit-user-select: none;
+  overflow: visible !important;
+}}
+body.kd-ready {{ padding-top: var(--kd-h) !important; }}
+
+/* hide brand/logo */
+.kd-merged .pf-v6-c-masthead__brand {{ display: none !important; }}
+
+/* compact the toggle (PF hamburger) */
+.kd-merged .pf-v6-c-masthead__toggle {{ flex-shrink: 0; }}
+.kd-merged .pf-v6-c-masthead__toggle button {{
+  width: 36px; height: var(--kd-h); padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none !important; border: none !important; color: var(--kd-bar-fg) !important;
+}}
+.kd-merged .pf-v6-c-masthead__toggle button:hover {{ background: var(--kd-bar-hover) !important; }}
+
+/* the content area (user profile) pushed to the right */
+.kd-merged .pf-v6-c-masthead__content {{
+  flex-shrink: 0 !important; flex-grow: 0 !important;
+  margin-left: 0 !important; padding: 0 !important;
+  display: flex !important; align-items: center !important;
+  height: 100% !important;
+}}
+.kd-merged .pf-v6-c-toolbar {{ padding: 0 !important; background: transparent !important; height: 100%; }}
+.kd-merged .pf-v6-c-toolbar__content {{ padding: 0 !important; height: 100%; }}
+.kd-merged .pf-v6-c-toolbar__content-section {{ gap: 0; }}
+
+/* --- menus (injected into masthead) --- */
+#kd-menus {{ display: flex; height: 100%; flex-shrink: 0; align-items: center; }}
+.kd-menu-trigger {{
+  padding: 0 10px; height: 100%; cursor: pointer;
+  background: none; border: none; color: var(--kd-bar-fg2); font: inherit;
+}}
+.kd-menu-trigger:hover, .kd-menu-trigger.kd-active {{ background: var(--kd-bar-hover); color: var(--kd-bar-fg); }}
+
+/* --- center drag region with title --- */
+#kd-drag {{
+  flex: 1; height: 100%; min-width: 0;
+  display: flex; align-items: center; justify-content: center;
+}}
+#kd-drag span {{
+  font-size: 12px; font-weight: 500; color: var(--kd-bar-fg2);
+  pointer-events: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}}
+
+/* --- dropdowns --- */
+.kd-dropdown {{
+  display: none; position: fixed;
+  min-width: 200px; background: var(--kd-dd-bg); border: 1px solid var(--kd-dd-brd);
+  box-shadow: 0 4px 16px rgba(0,0,0,.25); z-index: 1000000;
+  padding: 4px 0; border-radius: 0 0 4px 4px;
+  font: 500 12px/1 "RedHatText","Red Hat Text",system-ui,sans-serif;
+  color: var(--kd-dd-fg);
+}}
+.kd-dropdown.kd-open {{ display: block; }}
+.kd-dropdown .kd-item {{
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 14px; cursor: pointer; font-size: 12px;
+  border: none; background: none; width: 100%; text-align: left;
+  font: inherit; color: inherit;
+}}
+.kd-dropdown .kd-item:hover {{ background: var(--kd-dd-hover-bg); color: var(--kd-dd-hover-fg); }}
+.kd-dropdown .kd-item:hover .kd-shortcut {{ color: rgba(255,255,255,.7); }}
+.kd-dropdown .kd-sep {{ height: 1px; background: var(--kd-dd-brd); margin: 3px 8px; }}
+.kd-dropdown .kd-shortcut {{ color: var(--kd-dd-shortcut); font-size: 11px; margin-left: 20px; }}
+
+/* fix PF dropdown/menu z-index so they appear above our bar */
+.pf-v6-c-menu {{ z-index: 1000001 !important; }}
+.pf-v6-c-dropdown__menu {{ z-index: 1000001 !important; }}
+.pf-v6-c-select__menu {{ z-index: 1000001 !important; }}
+body > .pf-v6-c-popover {{ z-index: 1000001 !important; }}
+[class*="pf-v6-c-menu"] {{ z-index: 1000001 !important; }}
+
+/* === standalone fallback bar for non-koku-ui pages === */
+#kd-bar {{
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--kd-h); z-index: 999999;
+  display: flex; align-items: center;
+  background: var(--kd-bar-bg); color: var(--kd-bar-fg);
+  font: 500 12px/1 "RedHatText","Red Hat Text",system-ui,sans-serif;
+  user-select: none; -webkit-user-select: none;
+  border-bottom: 1px solid var(--kd-bar-brd);
+}}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+  if (document.querySelector('.kd-merged') || document.getElementById('kd-bar')) return;
+  var T = window.__TAURI__;
+  var invoke = T ? T.core.invoke : null;
+
+  var menuDefs = {{
+    file: {{
+      label: 'File',
+      items: [
+        {{ label: 'App Settings', nav: '/_settings/' }},
+        {{ label: 'Print', shortcut: 'Ctrl+P', action: 'print' }},
+        {{ sep: true }},
+        {{ label: 'Quit', shortcut: 'Ctrl+Q', action: 'quit' }}
+      ]
+    }},
+    navigate: {{
+      label: 'Navigate',
+      items: [
+        {{ label: 'Overview', shortcut: 'Ctrl+H', nav: '/openshift/cost-management/' }},
+        {{ label: 'OpenShift', shortcut: 'Ctrl+O', nav: '/openshift/cost-management/ocp' }},
+        {{ label: 'AWS', nav: '/openshift/cost-management/aws' }},
+        {{ label: 'Azure', nav: '/openshift/cost-management/azure' }},
+        {{ label: 'GCP', nav: '/openshift/cost-management/gcp' }},
+        {{ label: 'Cost Explorer', shortcut: 'Ctrl+E', nav: '/openshift/cost-management/explorer' }},
+        {{ label: 'Optimizations', nav: '/openshift/cost-management/optimizations' }},
+        {{ sep: true }},
+        {{ label: 'CM Settings', shortcut: 'Ctrl+Shift+S', nav: '/openshift/cost-management/settings' }}
+      ]
+    }},
+    view: {{
+      label: 'View',
+      items: [
+        {{ label: 'Toggle Theme', shortcut: 'Ctrl+T', action: 'theme' }}
+      ]
+    }},
+    help: {{
+      label: 'Help',
+      items: [
+        {{ label: 'About', nav: '/_about/' }}
+      ]
+    }}
+  }};
+
+  function doAction(act) {{
+    if (act === 'print') window.print();
+    else if (act === 'quit' && invoke) invoke('quit_app');
+    else if (act === 'theme') document.documentElement.classList.toggle('pf-v6-theme-dark');
+  }}
+
+  var dropdowns = [];
+  var triggers = [];
+
+  function closeAll() {{
+    dropdowns.forEach(function(d) {{ d.classList.remove('kd-open'); }});
+    triggers.forEach(function(t) {{ t.classList.remove('kd-active'); }});
+  }}
+
+  function buildMenus() {{
+    var menusDiv = document.createElement('div');
+    menusDiv.id = 'kd-menus';
+    Object.keys(menuDefs).forEach(function(key) {{
+      var menu = menuDefs[key];
+      var trigger = document.createElement('button');
+      trigger.className = 'kd-menu-trigger';
+      trigger.textContent = menu.label;
+      triggers.push(trigger);
+
+      var dd = document.createElement('div');
+      dd.className = 'kd-dropdown';
+      menu.items.forEach(function(item) {{
+        if (item.sep) {{ var s = document.createElement('div'); s.className='kd-sep'; dd.appendChild(s); return; }}
+        var btn = document.createElement('button');
+        btn.className = 'kd-item';
+        btn.innerHTML = item.label + (item.shortcut ? '<span class="kd-shortcut">' + item.shortcut + '</span>' : '');
+        btn.addEventListener('click', function() {{ closeAll(); if (item.nav) window.location.href=item.nav; if (item.action) doAction(item.action); }});
+        dd.appendChild(btn);
+      }});
+      dropdowns.push(dd);
+
+      trigger.addEventListener('click', function(e) {{
+        e.stopPropagation();
+        var isOpen = dd.classList.contains('kd-open');
+        closeAll();
+        if (!isOpen) {{
+          var r = trigger.getBoundingClientRect();
+          dd.style.left = r.left + 'px'; dd.style.top = r.bottom + 'px';
+          dd.classList.add('kd-open'); trigger.classList.add('kd-active');
+        }}
+      }});
+      trigger.addEventListener('mouseenter', function() {{
+        if (dropdowns.some(function(d){{ return d.classList.contains('kd-open'); }})) {{
+          closeAll();
+          var r = trigger.getBoundingClientRect();
+          dd.style.left = r.left + 'px'; dd.style.top = r.bottom + 'px';
+          dd.classList.add('kd-open'); trigger.classList.add('kd-active');
+        }}
+      }});
+      menusDiv.appendChild(trigger);
+    }});
+    return menusDiv;
+  }}
+
+  function buildDrag() {{
+    var drag = document.createElement('div');
+    drag.id = 'kd-drag';
+    drag.setAttribute('data-tauri-drag-region', '');
+    drag.innerHTML = '<span>Cost Management</span>';
+    return drag;
+  }}
+
+  /* inject our menus/drag INTO the PF masthead, keeping all React elements in place */
+  function mergeMasthead(mh) {{
+    mh.classList.add('kd-merged');
+    document.body.classList.add('kd-ready');
+
+    var toggle = mh.querySelector('.pf-v6-c-masthead__toggle');
+    var content = mh.querySelector('.pf-v6-c-masthead__content');
+
+    var menus = buildMenus();
+    if (toggle) {{
+      toggle.after(menus);
+    }} else {{
+      mh.prepend(menus);
+    }}
+
+    var drag = buildDrag();
+    if (content) {{
+      content.before(drag);
+    }} else {{
+      mh.appendChild(drag);
+    }}
+
+    dropdowns.forEach(function(d) {{ document.body.appendChild(d); }});
+
+    /* remove fallback bar if present */
+    var fb = document.getElementById('kd-bar');
+    if (fb) fb.remove();
+  }}
+
+  /* fallback bar for non-koku-ui pages (Settings, About) */
+  function createFallbackBar() {{
+    document.body.classList.add('kd-ready');
+    var bar = document.createElement('div');
+    bar.id = 'kd-bar';
+    bar.appendChild(buildMenus());
+    bar.appendChild(buildDrag());
+    document.body.prepend(bar);
+    dropdowns.forEach(function(d) {{ document.body.appendChild(d); }});
+  }}
+
+  var mh = document.querySelector('.pf-v6-c-masthead');
+  if (mh) {{
+    mergeMasthead(mh);
+  }} else {{
+    createFallbackBar();
+    var observer = new MutationObserver(function(mutations, obs) {{
+      var found = document.querySelector('.pf-v6-c-masthead');
+      if (found) {{ obs.disconnect(); mergeMasthead(found); }}
+    }});
+    observer.observe(document.body, {{ childList: true, subtree: true }});
+    setTimeout(function() {{ observer.disconnect(); }}, 10000);
+  }}
+
+  document.addEventListener('click', closeAll);
+
+  /* keyboard shortcuts */
+  document.addEventListener('keydown', function(e) {{
+    var ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl && !e.shiftKey) {{
+      switch(e.key.toLowerCase()) {{
+        case 'h': e.preventDefault(); window.location.href='/openshift/cost-management/'; break;
+        case 'o': e.preventDefault(); window.location.href='/openshift/cost-management/ocp'; break;
+        case 'e': e.preventDefault(); window.location.href='/openshift/cost-management/explorer'; break;
+        case 't': e.preventDefault(); doAction('theme'); break;
+        case 'p': e.preventDefault(); doAction('print'); break;
+        case 'q': e.preventDefault(); doAction('quit'); break;
+      }}
+    }}
+    if (ctrl && e.shiftKey && e.key.toLowerCase() === 's') {{
+      e.preventDefault();
+      window.location.href='/openshift/cost-management/settings';
+    }}
+    if (e.key === 'Escape') closeAll();
+  }});
+}});
+</script>
+"##
     )
 }
 

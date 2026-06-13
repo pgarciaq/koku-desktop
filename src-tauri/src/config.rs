@@ -37,15 +37,45 @@ pub struct ModuleConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OidcConfig {
+    #[serde(default = "default_keycloak_url")]
+    pub keycloak_url: String,
+    #[serde(default = "default_realm")]
+    pub realm: String,
     #[serde(default)]
     pub client_id: String,
+    #[serde(default)]
+    pub client_secret: String,
+    #[serde(default)]
+    pub username: String,
+    #[serde(default)]
+    pub password: String,
+}
+
+fn default_keycloak_url() -> String {
+    "https://keycloak.example.com".to_string()
+}
+
+fn default_realm() -> String {
+    "cost-management".to_string()
 }
 
 impl Default for OidcConfig {
     fn default() -> Self {
         Self {
-            client_id: "cost-management-desktop".to_string(),
+            keycloak_url: default_keycloak_url(),
+            realm: default_realm(),
+            client_id: "cost-management-ui".to_string(),
+            client_secret: String::new(),
+            username: String::new(),
+            password: String::new(),
         }
+    }
+}
+
+impl OidcConfig {
+    pub fn token_url(&self) -> String {
+        let base = self.keycloak_url.trim_end_matches('/');
+        format!("{base}/realms/{}/protocol/openid-connect/token", self.realm)
     }
 }
 

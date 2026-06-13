@@ -428,10 +428,9 @@
             <input type="radio" name="auth_mode" value="dev" id="auth-dev" checked>
             <span>Development (no Keycloak)</span>
           </label>
-          <label class="radio-option radio-option--disabled">
-            <input type="radio" name="auth_mode" value="oidc" id="auth-oidc" disabled>
+          <label class="radio-option">
+            <input type="radio" name="auth_mode" value="oidc" id="auth-oidc">
             <span>Keycloak OIDC</span>
-            <span class="badge-soon">(coming soon)</span>
           </label>
         </fieldset>
 
@@ -463,18 +462,28 @@
 
         <div class="auth-panel" id="oidc-panel" hidden>
           <div class="field">
+            <label for="oidc-keycloak-url">Keycloak URL</label>
+            <input type="text" id="oidc-keycloak-url" placeholder="https://keycloak.example.com" spellcheck="false" autocomplete="url">
+          </div>
+          <div class="field">
+            <label for="oidc-realm">Realm</label>
+            <input type="text" id="oidc-realm" value="kubernetes" spellcheck="false">
+          </div>
+          <div class="field">
             <label for="oidc-client-id">Client ID</label>
-            <input type="text" id="oidc-client-id" value="cost-management-desktop" spellcheck="false">
+            <input type="text" id="oidc-client-id" value="cost-management-ui" spellcheck="false">
           </div>
           <div class="field">
             <label for="oidc-client-secret">Client Secret</label>
-            <div class="input-with-icon">
-              <input type="password" id="oidc-client-secret" autocomplete="off">
-              <svg class="input-icon" viewBox="0 0 16 16" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                <path fill="currentColor" d="M8 1a4 4 0 0 0-4 4v2H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm2 6H6V5a2 2 0 1 1 4 0v2z"/>
-              </svg>
-            </div>
-            <p class="hint">Stored securely in the OS keychain</p>
+            <input type="password" id="oidc-client-secret" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="oidc-username">Username</label>
+            <input type="text" id="oidc-username" autocomplete="username" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="oidc-password">Password</label>
+            <input type="password" id="oidc-password" autocomplete="current-password">
           </div>
         </div>
       </section>
@@ -505,7 +514,7 @@
 
       <footer class="footer">
         <button type="submit" class="btn btn-primary" id="save-btn">Save &amp; Connect</button>
-        <button type="button" class="btn btn-secondary" id="cancel-btn" hidden>Cancel</button>
+        <a href="/openshift/cost-management/" class="btn btn-secondary" id="back-btn">Back to Cost Management</a>
       </footer>
     </form>
   </div>
@@ -544,8 +553,12 @@
         devOrgId: document.getElementById("dev-org-id"),
         devAccount: document.getElementById("dev-account"),
         devIdentityJson: document.getElementById("dev-identity-json"),
+        oidcKeycloakUrl: document.getElementById("oidc-keycloak-url"),
+        oidcRealm: document.getElementById("oidc-realm"),
         oidcClientId: document.getElementById("oidc-client-id"),
         oidcClientSecret: document.getElementById("oidc-client-secret"),
+        oidcUsername: document.getElementById("oidc-username"),
+        oidcPassword: document.getElementById("oidc-password"),
         moduleRos: document.getElementById("module-ros"),
         moduleSources: document.getElementById("module-sources"),
         themeSelect: document.getElementById("theme-select"),
@@ -621,7 +634,12 @@
             sources: els.moduleSources.checked
           },
           oidc: {
-            client_id: els.oidcClientId.value.trim()
+            keycloak_url: els.oidcKeycloakUrl.value.trim(),
+            realm: els.oidcRealm.value.trim(),
+            client_id: els.oidcClientId.value.trim(),
+            client_secret: els.oidcClientSecret.value,
+            username: els.oidcUsername.value.trim(),
+            password: els.oidcPassword.value
           },
           dev_identity: authMode === "dev" ? parseIdentityJson() : DEFAULT_IDENTITY
         };
@@ -635,7 +653,12 @@
         } else {
           els.authDev.checked = true;
         }
-        els.oidcClientId.value = config.oidc?.client_id || "cost-management-desktop";
+        els.oidcKeycloakUrl.value = config.oidc?.keycloak_url || "";
+        els.oidcRealm.value = config.oidc?.realm || "kubernetes";
+        els.oidcClientId.value = config.oidc?.client_id || "cost-management-ui";
+        els.oidcClientSecret.value = config.oidc?.client_secret || "";
+        els.oidcUsername.value = config.oidc?.username || "";
+        els.oidcPassword.value = config.oidc?.password || "";
         applyIdentityToFields(config.dev_identity || DEFAULT_IDENTITY);
         els.moduleRos.checked = config.modules?.ros !== false;
         els.moduleSources.checked = config.modules?.sources !== false;
@@ -677,7 +700,7 @@
         els.testBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Testing…</span>';
 
         try {
-          const result = await invoke("test_connection", { serverUrl });
+          const result = await invoke("test_connection", { url: serverUrl });
           const version = result?.version || result?.data?.version || result?.cost_management_version || "unknown";
           showTestResult("success", checkIcon + "<span>Connected — server version " + escapeHtml(String(version)) + "</span>");
         } catch (err) {

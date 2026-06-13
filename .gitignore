@@ -2,6 +2,9 @@
 /target/
 /src-tauri/target/
 
+# Node
+/node_modules/
+
 # Pre-built koku-ui static files (built from koku-ui repo)
 /ui/
 

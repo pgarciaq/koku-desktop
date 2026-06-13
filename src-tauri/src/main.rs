@@ -10,12 +10,12 @@ use proxy::ProxyServer;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{
-    menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     webview::{DownloadEvent, WebviewWindowBuilder},
     AppHandle, Manager, RunEvent, State, WebviewUrl,
 };
-use tauri_plugin_dialog::DialogExt;
+
 use tauri_plugin_log::{Target, TargetKind};
 use tokio::sync::RwLock;
 
@@ -34,9 +34,7 @@ fn create_auth_provider(config: &AppConfig) -> anyhow::Result<Arc<dyn AuthProvid
         AuthMode::Dev => Ok(Arc::new(DevAuthProvider::new(
             config.dev_identity.clone(),
         )?)),
-        AuthMode::Oidc => Ok(Arc::new(OidcAuthProvider::new(
-            config.oidc.client_id.clone(),
-        ))),
+        AuthMode::Oidc => Ok(Arc::new(OidcAuthProvider::new(&config.oidc)?)),
     }
 }
 
@@ -78,101 +76,6 @@ fn toggle_theme(app: &AppHandle) {
     drop(config);
 
     navigate(app, "/");
-}
-
-fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
-    let state = app.state::<AppState>();
-    let config = tauri::async_runtime::block_on(state.config.read());
-    let ros_enabled = config.modules.ros;
-    drop(config);
-
-    let optimizations_item = MenuItem::with_id(
-        app,
-        "nav_optimizations",
-        "Optimizations",
-        ros_enabled,
-        None::<&str>,
-    )?;
-
-    let theme_label = match tauri::async_runtime::block_on(state.config.read()).theme {
-        Theme::Dark => "Light Theme",
-        _ => "Dark Theme",
-    };
-
-    let file_menu = Submenu::with_items(
-        app,
-        "File",
-        true,
-        &[
-            &MenuItem::with_id(app, "file_settings", "Settings", true, None::<&str>)?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "file_print", "Print", true, Some("CmdOrCtrl+P"))?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "file_quit", "Quit", true, Some("CmdOrCtrl+Q"))?,
-        ],
-    )?;
-
-    let navigate_menu = Submenu::with_items(
-        app,
-        "Navigate",
-        true,
-        &[
-            &MenuItem::with_id(
-                app,
-                "nav_overview",
-                "Overview",
-                true,
-                Some("CmdOrCtrl+H"),
-            )?,
-            &MenuItem::with_id(
-                app,
-                "nav_openshift",
-                "OpenShift",
-                true,
-                Some("CmdOrCtrl+O"),
-            )?,
-            &MenuItem::with_id(app, "nav_aws", "AWS", true, None::<&str>)?,
-            &MenuItem::with_id(app, "nav_azure", "Azure", true, None::<&str>)?,
-            &MenuItem::with_id(app, "nav_gcp", "GCP", true, None::<&str>)?,
-            &MenuItem::with_id(
-                app,
-                "nav_explorer",
-                "Cost Explorer",
-                true,
-                Some("CmdOrCtrl+E"),
-            )?,
-            &optimizations_item,
-            &MenuItem::with_id(
-                app,
-                "nav_settings",
-                "Settings",
-                true,
-                Some("CmdOrCtrl+Shift+S"),
-            )?,
-        ],
-    )?;
-
-    let view_menu = Submenu::with_items(
-        app,
-        "View",
-        true,
-        &[&MenuItem::with_id(
-            app,
-            "view_theme",
-            theme_label,
-            true,
-            Some("CmdOrCtrl+T"),
-        )?],
-    )?;
-
-    let help_menu = Submenu::with_items(
-        app,
-        "Help",
-        true,
-        &[&MenuItem::with_id(app, "help_about", "About", true, None::<&str>)?],
-    )?;
-
-    Menu::with_items(app, &[&file_menu, &navigate_menu, &view_menu, &help_menu])
 }
 
 fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
@@ -221,20 +124,39 @@ fn default_download_filename(url: &url::Url) -> String {
         .unwrap_or_else(|| "download.csv".to_string())
 }
 
+fn unique_path(path: &std::path::Path) -> PathBuf {
+    if !path.exists() {
+        return path.to_path_buf();
+    }
+    let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
+    let parent = path.parent().unwrap_or(std::path::Path::new("."));
+    for i in 1..1000 {
+        let name = if ext.is_empty() {
+            format!("{stem} ({i})")
+        } else {
+            format!("{stem} ({i}).{ext}")
+        };
+        let candidate = parent.join(name);
+        if !candidate.exists() {
+            return candidate;
+        }
+    }
+    path.to_path_buf()
+}
+
 #[tauri::command]
 fn get_config(state: State<'_, AppState>) -> Result<AppConfig, String> {
     Ok(tauri::async_runtime::block_on(state.config.read()).clone())
 }
 
 #[tauri::command]
-fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<(), String> {
+async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<(), String> {
     config.save().map_err(|e| e.to_string())?;
     let auth = create_auth_provider(&config).map_err(|e| e.to_string())?;
 
-    tauri::async_runtime::block_on(async {
-        *state.config.write().await = config;
-        *state.auth.write().await = auth;
-    });
+    *state.config.write().await = config;
+    *state.auth.write().await = auth;
 
     Ok(())
 }
@@ -244,7 +166,10 @@ async fn test_connection(url: String) -> Result<serde_json::Value, String> {
     let base = url.trim_end_matches('/');
     let status_url = format!("{base}/api/cost-management/v1/status/");
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .map_err(|e| e.to_string())?;
     match client.get(&status_url).send().await {
         Ok(response) => {
             let status = response.status().as_u16();
@@ -261,6 +186,11 @@ async fn test_connection(url: String) -> Result<serde_json::Value, String> {
             "error": err.to_string(),
         })),
     }
+}
+
+#[tauri::command]
+fn quit_app(app: AppHandle) {
+    app.exit(0);
 }
 
 #[tauri::command]
@@ -287,7 +217,10 @@ async fn get_server_status(state: State<'_, AppState>) -> Result<serde_json::Val
     };
 
     let status_url = format!("{server_url}/api/cost-management/v1/status/");
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .map_err(|e| e.to_string())?;
     let mut request = client.get(&status_url);
     for (name, value) in auth.request_headers().iter() {
         request = request.header(name, value);
@@ -364,14 +297,10 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        // .plugin(tauri_plugin_updater::Builder::new().build()) // TODO: enable when pubkey is configured
         .manage(app_state)
-        .menu(|app| build_menu(app))
-        .on_menu_event(|app, event| {
-            handle_menu_event(app, event.id().as_ref());
-        })
         .setup(move |app| {
-            let tray_menu = build_tray_menu(app)?;
+            let tray_menu = build_tray_menu(app.handle())?;
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&tray_menu)
@@ -409,25 +338,21 @@ fn main() {
             .title("Cost Management")
             .inner_size(1280.0, 800.0)
             .min_inner_size(800.0, 600.0)
-            .on_download(move |webview, event| match event {
+            .on_download(move |_webview, event| match event {
                 DownloadEvent::Requested { url, destination } => {
-                    let default_name = default_download_filename(&url);
-                    if let Some(path) = webview
-                        .dialog()
-                        .file()
-                        .set_file_name(&default_name)
-                        .set_directory(&download_dir)
-                        .add_filter("CSV files", &["csv"])
-                        .add_filter("All files", &["*"])
-                        .blocking_save_file()
-                    {
-                        *destination = path;
-                        true
-                    } else {
-                        false
-                    }
+                    let filename = default_download_filename(&url);
+                    let target = download_dir.join(&filename);
+                    let target = unique_path(&target);
+                    log::info!("Download starting: {} -> {}", url, target.display());
+                    *destination = target;
+                    true
                 }
-                DownloadEvent::Finished { .. } => true,
+                DownloadEvent::Finished { success, .. } => {
+                    if !success {
+                        log::error!("Download failed");
+                    }
+                    true
+                }
                 _ => true,
             })
             .build()?;
@@ -448,6 +373,7 @@ fn main() {
             test_connection,
             get_about_info,
             get_server_status,
+            quit_app,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Tauri application")
