@@ -333,7 +333,21 @@ fn build_head_injection(config: &AppConfig) -> String {
   user-select: none; -webkit-user-select: none;
   overflow: visible !important;
 }}
-body.kd-ready {{ padding-top: var(--kd-h) !important; }}
+body.kd-ready {{
+  padding-top: var(--kd-h) !important;
+  /* overflow: hidden + height: 100vh on body, combined with the .pf-v6-c-page
+     height below, confines the scrollbar to the content area below the fixed
+     masthead/titlebar. Without this the browser's native scrollbar runs the
+     full viewport height and overlaps the window control buttons. */
+  overflow: hidden !important; height: 100vh !important;
+}}
+body.kd-ready .pf-v6-c-page {{
+  height: calc(100vh - var(--kd-h)) !important;
+  overflow-y: auto !important;
+}}
+body.kd-ready .pf-v6-c-page__main-section:first-of-type {{
+  padding-top: 16px !important;
+}}
 
 /* hide brand/logo */
 .kd-merged .pf-v6-c-masthead__brand {{ display: none !important; }}
@@ -357,6 +371,18 @@ body.kd-ready {{ padding-top: var(--kd-h) !important; }}
 .kd-merged .pf-v6-c-toolbar {{ padding: 0 !important; background: transparent !important; height: 100%; }}
 .kd-merged .pf-v6-c-toolbar__content {{ padding: 0 !important; height: 100%; }}
 .kd-merged .pf-v6-c-toolbar__content-section {{ gap: 0; }}
+.kd-merged .pf-v6-c-toolbar__item,
+.kd-merged .pf-v6-c-toolbar__group {{
+  height: var(--kd-h) !important; align-items: center;
+}}
+.kd-merged .pf-v6-c-menu-toggle {{
+  font-size: 12px !important; padding: 2px 8px !important;
+  height: 28px !important; gap: 6px !important;
+}}
+.kd-merged .pf-v6-c-avatar {{
+  width: 20px !important; height: 20px !important;
+  object-fit: cover !important;
+}}
 
 /* --- menus (injected into masthead) --- */
 #kd-menus {{ display: flex; height: 100%; flex-shrink: 0; align-items: center; }}
@@ -396,6 +422,18 @@ body.kd-ready {{ padding-top: var(--kd-h) !important; }}
 .kd-dropdown .kd-item:hover .kd-shortcut {{ color: rgba(255,255,255,.7); }}
 .kd-dropdown .kd-sep {{ height: 1px; background: var(--kd-dd-brd); margin: 3px 8px; }}
 .kd-dropdown .kd-shortcut {{ color: var(--kd-dd-shortcut); font-size: 11px; margin-left: 20px; }}
+
+/* --- window controls (needed because native controls are hidden by the
+   GNOME titlebar removal hack in main.rs — see comments there) --- */
+#kd-wc {{ display: flex; height: 100%; flex-shrink: 0; }}
+#kd-wc button {{
+  width: 40px; height: 100%; border: none; background: none;
+  color: var(--kd-bar-fg2); cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+}}
+#kd-wc button:hover {{ background: var(--kd-bar-hover); }}
+#kd-wc button.kd-close:hover {{ background: #c42b1c; color: #fff; }}
+#kd-wc button svg {{ width: 10px; height: 10px; stroke: currentColor; stroke-width: 1.5; fill: none; }}
 
 /* fix PF dropdown/menu z-index so they appear above our bar */
 .pf-v6-c-menu {{ z-index: 1000001 !important; }}
@@ -522,8 +560,24 @@ document.addEventListener('DOMContentLoaded', function() {{
     var drag = document.createElement('div');
     drag.id = 'kd-drag';
     drag.setAttribute('data-tauri-drag-region', '');
-    drag.innerHTML = '<span>Cost Management</span>';
+    drag.innerHTML = '<span>Red Hat Lightspeed Cost Management Desktop</span>';
     return drag;
+  }}
+
+  function buildWinControls() {{
+    var wc = document.createElement('div');
+    wc.id = 'kd-wc';
+    wc.innerHTML = '<button class="kd-btn-min" title="Minimize"><svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"/></svg></button>'
+      + '<button class="kd-btn-max" title="Maximize"><svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" rx="0.5"/></svg></button>'
+      + '<button class="kd-close" title="Close"><svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg></button>';
+    var W = T && T.window ? T.window.getCurrentWindow() : null;
+    wc.querySelector('.kd-btn-min').addEventListener('click', function() {{ if (W) W.minimize(); }});
+    wc.querySelector('.kd-btn-max').addEventListener('click', function() {{
+      if (!W) return;
+      W.isMaximized().then(function(m) {{ if (m) W.unmaximize(); else W.maximize(); }});
+    }});
+    wc.querySelector('.kd-close').addEventListener('click', function() {{ if (W) W.close(); else if (invoke) invoke('quit_app'); }});
+    return wc;
   }}
 
   /* inject our menus/drag INTO the PF masthead, keeping all React elements in place */
@@ -548,6 +602,9 @@ document.addEventListener('DOMContentLoaded', function() {{
       mh.appendChild(drag);
     }}
 
+
+    mh.appendChild(buildWinControls());
+
     dropdowns.forEach(function(d) {{ document.body.appendChild(d); }});
 
     /* remove fallback bar if present */
@@ -562,6 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {{
     bar.id = 'kd-bar';
     bar.appendChild(buildMenus());
     bar.appendChild(buildDrag());
+    bar.appendChild(buildWinControls());
     document.body.prepend(bar);
     dropdowns.forEach(function(d) {{ document.body.appendChild(d); }});
   }}
@@ -614,7 +672,7 @@ fn missing_ui_response() -> impl IntoResponse {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Cost Management Desktop</title>
+  <title>Red Hat Lightspeed Cost Management Desktop</title>
 </head>
 <body>
   <h1>UI not built yet</h1>

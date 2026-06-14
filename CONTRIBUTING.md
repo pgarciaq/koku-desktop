@@ -200,9 +200,32 @@ The unified titlebar, theme switching, and keyboard shortcuts are all implemente
 
 Early iterations moved DOM nodes out of the React tree (e.g., reparenting the user profile toolbar). This broke React's event delegation — clicks on moved nodes never reached React's event handlers. The current approach injects our elements **into** the PatternFly masthead, keeping all React-managed DOM in place.
 
-### Why `decorations: true`?
+### Why `decorations: true`? (GNOME/Wayland titlebar removal)
 
-GNOME/Wayland ignores `decorations: false` and draws server-side decorations regardless. This resulted in duplicate titlebars. Setting `decorations: true` accepts the native titlebar and our injected titlebar handles menus/navigation only, avoiding visual duplication.
+On GNOME/Wayland, removing the native window titlebar is non-trivial because GNOME's Mutter compositor always wants to show a titlebar — either client-side decorations (CSD) drawn by GTK, or server-side decorations (SSD) drawn by GNOME itself. We need neither, because koku-desktop injects its own titlebar into the webview.
+
+The approaches that **don't work**:
+
+- `decorations: false` in `tauri.conf.json` — GNOME ignores this and draws SSD, resulting in a duplicate titlebar.
+- `gtk_window.set_titlebar(None)` — Removes CSD, but GNOME interprets the absence of CSD as a signal to draw SSD. Still a duplicate titlebar.
+- `decorations: false` **+** `set_titlebar(None)` — Same result. GNOME adds SSD.
+
+The approach that **works** (implemented in `main.rs`):
+
+1. Keep `decorations: true` so tao/Tauri creates a CSD window.
+2. Replace GTK's CSD headerbar with an **invisible zero-height widget** via `gtk_window.set_titlebar(Some(&empty))`. This tells GNOME "I'm handling my own titlebar" so it won't draw SSD, but the widget is invisible so only our webview-injected titlebar shows.
+3. Override GTK CSS globally to eliminate all space the decoration frame normally reserves (margins, padding, border-radius, box-shadow on the `decoration`, `headerbar`, `.titlebar`, and `window.background.csd` CSS nodes). Without this, a transparent gap appears around the window.
+4. Since native window controls (minimize/maximize/close) are hidden along with the native titlebar, custom window control buttons are injected into the webview titlebar (`buildWinControls()` in `proxy.rs`) and wired to Tauri's Window API.
+5. The page scrollbar is confined to the content area below the titlebar via `overflow: hidden` on `body` and a calculated height on `.pf-v6-c-page`. Without this, the browser's native scrollbar runs the full viewport height and overlaps the window control buttons.
+
+The `set_titlebar()` call on a realized window emits a harmless GTK warning. Tauri realizes the window during `.build()` and provides no pre-realization hook. The call still takes effect.
+
+**References:**
+- [tauri-apps/tauri#13142](https://github.com/tauri-apps/tauri/issues/13142) — Feature request + workaround
+- [tauri-apps/tao#1046](https://github.com/tauri-apps/tao/issues/1046) — CSD removal discussion
+- [gtktitlebar](https://github.com/velitasali/gtktitlebar) — GNOME extension that does similar work system-wide
+
+> **Important:** This hack is Linux/GTK-specific (`#[cfg(target_os = "linux")]`). On macOS and Windows, native titlebar handling works differently and this code does not run.
 
 ---
 

@@ -44,6 +44,8 @@ The `build_head_injection()` function in `proxy.rs` generates a large HTML/CSS/J
 - **The injection runs BEFORE React renders**: The injected script uses `DOMContentLoaded` and `MutationObserver` to wait for the PatternFly masthead to appear, then injects menu elements into it.
 - **DOM nodes must stay in the React tree**: Never move (reparent) React-managed DOM nodes out of their original container. React 18's event delegation is attached to the root container — moved nodes won't receive React synthetic events. Instead, inject new elements INTO existing React containers.
 - **The masthead approach**: Our menus and drag region are injected INTO the `.pf-v6-c-masthead` element. The masthead gets the `.kd-merged` class which restyles it as a compact fixed titlebar. The brand/logo is hidden. The PF hamburger and user profile stay in place and keep working.
+- **Window controls**: Custom minimize/maximize/close buttons (`#kd-wc`) are injected at the right end of the titlebar and wired to `window.__TAURI__.window.getCurrentWindow()`. These are necessary because the native window controls are hidden by the GNOME titlebar removal hack.
+- **Scrollbar containment**: `body` is `overflow: hidden; height: 100vh` and `.pf-v6-c-page` scrolls at `calc(100vh - titlebar)`. This prevents the browser scrollbar from overlapping the window control buttons.
 - **Fallback bar**: For non-koku-ui pages (Settings, About), a standalone `#kd-bar` div is created instead.
 
 ### 3. Theme handling
@@ -56,7 +58,24 @@ The theme is controlled by the `pf-v6-theme-dark` CSS class on `<html>`. The pro
 - **OIDC mode**: Keycloak password-grant flow. Tokens are cached in memory and refreshed automatically. Uses `reqwest::blocking` on a spawned thread (not the async runtime).
 - The `AuthProvider` trait is behind `Arc<RwLock<>>` — it can be swapped at runtime when the user saves new config.
 
-### 5. TLS and self-signed certificates
+### 5. GNOME/Wayland native titlebar removal
+
+This is the most complex platform hack in the codebase. It spans two files:
+
+- **`main.rs`** (Rust/GTK side): Replaces GTK's CSD headerbar with an invisible widget and overrides GTK CSS to eliminate the decoration frame. See the detailed block comment starting with "GNOME/Wayland titlebar removal hack".
+- **`proxy.rs`** (webview side): Injects custom window control buttons (`#kd-wc` with `buildWinControls()`) since native controls are hidden. Also confines the page scrollbar below the titlebar to prevent overlap.
+
+The five components that must stay in sync:
+1. `tauri.conf.json` → `decorations: true` (NOT false)
+2. `main.rs` → Empty GTK widget set as titlebar
+3. `main.rs` → GTK CSS overrides for decoration/headerbar/window nodes
+4. `proxy.rs` → `#kd-wc` window control buttons + Tauri Window API wiring
+5. `proxy.rs` → `body` overflow containment + `.pf-v6-c-page` scroll height
+6. `capabilities/default.json` → `core:window:allow-close` permission
+
+If any of these are removed or misconfigured, the result is either a duplicate titlebar, a transparent gap around the window, missing window controls, or the scrollbar overlapping the close button.
+
+### 6. TLS and self-signed certificates
 
 All `reqwest::Client` instances use `danger_accept_invalid_certs(true)` because lab/on-prem environments commonly use self-signed certificates. This applies in:
 - `proxy.rs` (API proxy client)
@@ -89,17 +108,39 @@ The proxy is an axum router in `proxy.rs`. Routes are defined in `build_router()
 ## Build and Test
 
 ```bash
-# Development (hot-reload Rust, opens window)
-cargo tauri dev
+# Build UI assets (requires koku-ui repo) -- MUST run after any UI change
+./scripts/build-ui.sh
 
-# Production build (binary + RPM + DEB)
-cargo tauri build
+# Quick Rust-only rebuild + run (use during development)
+cd src-tauri && cargo build --release && ./target/release/koku-desktop
+
+# Full production build with packages (binary + RPM + DEB)
+npx tauri build
 
 # Rust tests only
 cd src-tauri && cargo test
+```
 
-# Build UI assets (requires koku-ui repo)
-./scripts/build-ui.sh
+## CRITICAL: Rebuild Checklist
+
+**After ANY change, you MUST rebuild the affected layer before testing.** Failing to do this will make it look like your changes had no effect.
+
+| What you changed | Rebuild command |
+|------------------|-----------------|
+| `src-tauri/src/*.rs` (Rust code, including `proxy.rs` HTML injection) | `cd src-tauri && cargo build --release` |
+| `settings/index.html`, `about/index.html`, `splash/*` | `npx tauri build` (these are embedded at package time) OR `cd src-tauri && cargo build --release` (reads from filesystem at runtime) |
+| koku-ui source code (in the koku-ui repo) | `./scripts/build-ui.sh` then rebuild Tauri |
+| `src-tauri/tauri.conf.json`, `capabilities/`, `permissions/` | `npx tauri build` or `cd src-tauri && cargo build --release` |
+
+**The most common mistake:** changing CSS/JS in `proxy.rs` (which is Rust code that generates HTML injection) and forgetting to `cargo build --release` before launching the binary. The old binary still has the old injection code baked in.
+
+**Second most common mistake:** changing `settings/index.html` or `about/index.html` and only doing `cargo build`. When running the binary directly from `target/release/`, these files are read from the filesystem relative to the binary's base path. When running from `npx tauri build`, they are embedded. Always verify you're testing the right binary.
+
+**Always kill the old process before launching the new one:**
+
+```bash
+pkill -f "koku-desktop" 2>/dev/null; sleep 0.5
+# then launch the new binary
 ```
 
 ## Things to Avoid
@@ -110,7 +151,9 @@ cd src-tauri && cargo test
 4. **Never forget the IPC permission chain** (function → handler → toml → json).
 5. **Never use single `{` or `}` in the `format!()` macro** inside `build_head_injection()`. They must be `{{` and `}}`.
 6. **Never store secrets in config.json.** Use the OS keychain via the `keyring` crate.
-7. **Never assume `decorations: false` works on Linux.** GNOME/Wayland ignores it.
+7. **Never assume `decorations: false` works on Linux.** GNOME/Wayland ignores it. The `decorations: true` + invisible-titlebar-widget hack in `main.rs` is the only reliable approach. See the detailed comments in `main.rs` and the "Why `decorations: true`?" section in `CONTRIBUTING.md`.
+8. **Never remove the GTK CSS overrides in `main.rs`.** They eliminate the transparent gap/shadow that GTK's decoration frame reserves around CSD windows. Without them, the window has a visible frame/bleed around all edges.
+9. **Never remove the `#kd-wc` window controls from `proxy.rs`.** They are the only minimize/maximize/close buttons available since native controls are hidden by the GNOME hack.
 
 ## Upstream Context
 

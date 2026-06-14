@@ -82,7 +82,7 @@ fn build_tray_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     Menu::with_items(
         app,
         &[
-            &MenuItem::with_id(app, "tray_open", "Open Cost Management", true, None::<&str>)?,
+            &MenuItem::with_id(app, "tray_open", "Open Lightspeed Cost Management", true, None::<&str>)?,
             &MenuItem::with_id(app, "tray_settings", "Settings", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "tray_quit", "Quit", true, None::<&str>)?,
@@ -335,7 +335,7 @@ fn main() {
                         .map_err(|e| anyhow::anyhow!("invalid start URL: {e}"))?,
                 ),
             )
-            .title("Cost Management")
+            .title("Red Hat Lightspeed Cost Management Desktop")
             .inner_size(1280.0, 800.0)
             .min_inner_size(800.0, 600.0)
             .on_download(move |_webview, event| match event {
@@ -356,6 +356,86 @@ fn main() {
                 _ => true,
             })
             .build()?;
+
+            // GNOME/Wayland titlebar removal hack
+            //
+            // Problem: koku-desktop uses a custom titlebar injected into the webview
+            // (see proxy.rs build_head_injection). On GNOME/Wayland, the native
+            // titlebar cannot be removed through Tauri's config alone:
+            //
+            //   - `decorations: false` in tauri.conf.json does NOT work on GNOME.
+            //     GNOME's Mutter compositor draws server-side decorations (SSD)
+            //     regardless, resulting in a duplicate titlebar.
+            //
+            //   - `gtk_window.set_titlebar(None)` removes GTK's client-side
+            //     decorations (CSD), but GNOME interprets the absence of CSD as a
+            //     signal to draw SSD — again producing a duplicate titlebar.
+            //
+            // Solution (two parts):
+            //
+            // 1. Set an invisible zero-height GTK widget as the titlebar. This
+            //    tells GNOME "this app draws its own titlebar" so it won't add
+            //    SSD, but the widget is invisible so only our webview-injected
+            //    titlebar is visible.
+            //
+            // 2. Override GTK CSS to eliminate all space reserved for the
+            //    decoration frame: margins, padding, border-radius, and
+            //    box-shadow on the `decoration`, `headerbar`, `.titlebar`, and
+            //    `window.background.csd` nodes. Without this, GTK reserves a
+            //    transparent gap around the window where the decoration shadow
+            //    would normally render.
+            //
+            // Because window controls are hidden along with the native titlebar,
+            // custom minimize/maximize/close buttons are injected into the webview
+            // titlebar (see buildWinControls() in proxy.rs) and wired to Tauri's
+            // Window API.
+            //
+            // tauri.conf.json must keep `decorations: true` so tao creates a CSD
+            // window, which is what makes the empty-titlebar trick work.
+            //
+            // The `set_titlebar()` call on a realized window emits a GTK warning
+            // ("gtk_window_set_titlebar() called on a realized window"). This is
+            // harmless — Tauri realizes the window during `.build()` and there is
+            // no pre-realization hook. The call still takes effect.
+            //
+            // References:
+            //   - https://github.com/tauri-apps/tauri/issues/13142
+            //   - https://github.com/tauri-apps/tao/issues/1046
+            //   - https://github.com/velitasali/gtktitlebar (GNOME extension approach)
+            #[cfg(target_os = "linux")]
+            {
+                use gtk::prelude::{CssProviderExt, GtkWindowExt, WidgetExt};
+
+                let css = gtk::CssProvider::new();
+                css.load_from_data(
+                    b"headerbar, .titlebar { \
+                        min-height: 0; padding: 0; margin: 0; border: 0; \
+                        background: transparent; box-shadow: none; \
+                      } \
+                      decoration, decoration:backdrop { \
+                        margin: 0; border: none; padding: 0; \
+                        box-shadow: none; border-radius: 0; \
+                        outline: none; \
+                      } \
+                      .background { border-radius: 0; } \
+                      window, window.background, window.background.csd { \
+                        border-radius: 0; box-shadow: none; \
+                        margin: 0; padding: 0; border: none; outline: none; \
+                      }",
+                )?;
+                gtk::StyleContext::add_provider_for_screen(
+                    &gtk::gdk::Screen::default()
+                        .ok_or_else(|| anyhow::anyhow!("no default GDK screen"))?,
+                    &css,
+                    gtk::STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
+                );
+
+                let gtk_window = main_window.gtk_window()
+                    .map_err(|e| anyhow::anyhow!("failed to get GTK window: {e}"))?;
+                let empty = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+                empty.set_size_request(-1, 0);
+                gtk_window.set_titlebar(Some(&empty));
+            }
 
             main_window.navigate(
                 start_url
