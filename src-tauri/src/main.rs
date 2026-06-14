@@ -259,8 +259,12 @@ fn get_about_info() -> Result<serde_json::Value, String> {
     let os = os_info::get();
     Ok(serde_json::json!({
         "version": env!("CARGO_PKG_VERSION"),
+        "build_id": env!("BUILD_ID"),
         "build_date": env!("BUILD_DATE"),
         "git_hash": env!("GIT_HASH"),
+        "ui_date": env!("UI_DATE"),
+        "ui_hash": env!("UI_HASH"),
+        "ui_ref": env!("UI_REF"),
         "os_name": os.os_type().to_string(),
         "os_version": os.version().to_string(),
         "os_arch": std::env::consts::ARCH,

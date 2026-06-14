@@ -237,7 +237,7 @@
         <path fill="#EE0000" d="M6 28c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-1H6v1z"/>
       </svg>
       <div class="header__text">
-        <h1 class="header__title">Cost Management Desktop</h1>
+        <h1 class="header__title">Red Hat Lightspeed Cost Management Desktop</h1>
         <p class="header__version" id="header-version">Version …</p>
       </div>
     </header>
@@ -251,8 +251,12 @@
             <dd id="client-version" class="loading">Loading…</dd>
           </div>
           <div class="info-row">
-            <dt>Build</dt>
+            <dt>Desktop Build</dt>
             <dd id="client-build" class="loading">Loading…</dd>
+          </div>
+          <div class="info-row">
+            <dt>UI Build</dt>
+            <dd id="client-ui-build" class="loading">Loading…</dd>
           </div>
           <div class="info-row">
             <dt>OS</dt>
@@ -306,6 +310,7 @@
         headerVersion: document.getElementById("header-version"),
         clientVersion: document.getElementById("client-version"),
         clientBuild: document.getElementById("client-build"),
+        clientUiBuild: document.getElementById("client-ui-build"),
         clientOs: document.getElementById("client-os"),
         clientRuntime: document.getElementById("client-runtime"),
         serverUrl: document.getElementById("server-url"),
@@ -352,12 +357,22 @@
         try {
           const info = await invoke("get_about_info");
           const version = info?.version || "—";
-          setText(els.headerVersion, "Version " + version);
-          setText(els.clientVersion, version);
+          const buildId = info?.build_id || "";
+          const fullVersion = buildId ? version + "+" + buildId : version;
+          setText(els.headerVersion, "Version " + fullVersion);
+          setText(els.clientVersion, fullVersion);
 
-          const commit = info?.build?.commit || info?.commit || "—";
-          const date = info?.build?.date || info?.build_date || "";
+          const commit = info?.git_hash || info?.build?.commit || info?.commit || "—";
+          const date = info?.build_date || info?.build?.date || "";
           setText(els.clientBuild, date ? commit + " · " + date : commit);
+
+          const uiHash = info?.ui_hash || "—";
+          const uiDate = info?.ui_date || "";
+          const uiRef = info?.ui_ref || "";
+          const uiParts = [uiHash, uiDate, uiRef].filter(v => v && v !== "unknown" && v !== uiHash);
+          setText(els.clientUiBuild, uiDate && uiDate !== "unknown"
+            ? uiHash + " · " + uiDate + (uiRef && uiRef !== "unknown" && uiRef !== uiHash ? " · " + uiRef : "")
+            : uiHash);
 
           const osName = info?.os?.name || info?.os_name || "";
           const osVersion = info?.os?.version || info?.os_version || "";

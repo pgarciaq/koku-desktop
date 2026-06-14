@@ -1,0 +1,37 @@
+---
+description: Rebuild rules for koku-desktop — ensures agents always rebuild before testing
+globs:
+alwaysApply: true
+---
+
+# koku-desktop Rebuild Rules
+
+CRITICAL: After making ANY code change, you MUST rebuild before testing. The old binary has old code baked in.
+
+## Rebuild commands by change type
+
+- **Any change, always run BOTH steps:**
+  ```
+  pkill -f "koku-desktop" 2>/dev/null; sleep 0.5
+  ./scripts/build-ui.sh && npx tauri build
+  ```
+  Then launch the binary.
+
+## Launch sequence
+
+Always kill the old process first, then launch the new binary:
+
+```
+pkill -f "koku-desktop" 2>/dev/null; sleep 0.5
+./src-tauri/target/release/koku-desktop
+```
+
+## Default rebuild command
+
+ALWAYS run `./scripts/build-ui.sh && npx tauri build`. BOTH commands, every time. No exceptions. Do NOT use `cargo build --release` alone or `npx tauri build` alone.
+
+## Common mistakes
+
+1. Editing `proxy.rs` and forgetting to `cargo build --release` — the HTML injection is compiled into the Rust binary, not read at runtime.
+2. Running `npx tauri dev` — this project has no frontend dev server. Use `cargo build --release` + run the binary, or `npx tauri build`.
+3. Not killing the old process before launching — two instances will conflict.

@@ -23,3 +23,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Generated at build time by stamp-version.sh
+.stamped-version

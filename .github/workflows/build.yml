@@ -52,6 +52,15 @@ jobs:
             cp -r /tmp/koku-ui/apps/rbac-ui-onprem/dist/. ui/rbac/
           fi
 
+      - name: Capture koku-ui build info
+        run: |
+          cd /tmp/koku-ui
+          UI_DATE=$(git log -1 --format='%cd' --date=format:'%Y%m%d')
+          UI_HASH=$(git rev-parse HEAD | head -c 10)
+          UI_REF=$(git describe --tags --always 2>/dev/null || echo "$UI_HASH")
+          echo "$UI_DATE $UI_HASH $UI_REF" > ${{ github.workspace }}/ui/.build-info
+          echo "koku-ui: $UI_DATE $UI_HASH ($UI_REF)"
+
       - name: Upload UI artifact
         uses: actions/upload-artifact@v4
         with:
@@ -120,11 +129,16 @@ jobs:
       - name: Verify UI assets
         shell: bash
         run: |
-          echo "Contents of ui/:"
-          ls -la ui/ || dir ui\\
-          echo "---"
-          echo "Contents of ui/costManagement/:"
-          ls ui/costManagement/ 2>/dev/null || dir ui\\costManagement 2>nul || echo "(not found)"
+          echo "=== ui/.build-info ==="
+          cat ui/.build-info || echo "(not found)"
+          echo "=== ui/ contents ==="
+          ls ui/
+          echo "=== ui/costManagement/ ==="
+          ls ui/costManagement/ 2>/dev/null || echo "(not found)"
+
+      - name: Stamp version
+        shell: bash
+        run: bash scripts/stamp-version.sh
 
       - name: Build Tauri app
         shell: bash

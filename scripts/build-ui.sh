@@ -132,6 +132,13 @@ copy_dist \
   "$UI_DEST/rbac" \
   "RBAC / IAM (insightsRbac)"
 
+cd "$KOKU_UI_DIR"
+UI_DATE=$(git log -1 --format='%cd' --date=format:'%Y%m%d')
+UI_HASH=$(git rev-parse HEAD | head -c 10)
+UI_REF=$(git describe --tags --always 2>/dev/null || echo "$UI_HASH")
+echo "$UI_DATE $UI_HASH $UI_REF" > "$UI_DEST/.build-info"
+echo "  koku-ui build info: $UI_DATE $UI_HASH ($UI_REF)"
+
 echo
 echo "Build complete. Summary:"
 echo "  ui/                   <- apps/koku-ui-onprem/dist"
@@ -139,3 +146,4 @@ echo "  ui/costManagement/    <- apps/koku-ui-hccm/dist"
 echo "  ui/costManagementRos/ <- apps/koku-ui-ros/dist"
 echo "  ui/sources/           <- apps/koku-ui-sources/dist"
 echo "  ui/rbac/              <- apps/rbac-ui-onprem/dist"
+echo "  ui/.build-info        <- koku-ui git metadata"
