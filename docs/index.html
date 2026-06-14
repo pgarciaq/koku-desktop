@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red Hat Lightspeed Cost Management Desktop</title>
+  <meta name="description" content="A lightweight desktop client for Red Hat Cost Management. Connect to SaaS or private on-prem instances from your desktop.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;900&family=Red+Hat+Text:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rh-red: #EE0000;
+      --rh-red-dark: #A30000;
+      --rh-black: #151515;
+      --rh-white: #FFFFFF;
+      --rh-gray-100: #F5F5F5;
+      --rh-gray-200: #E0E0E0;
+      --rh-gray-400: #8A8D90;
+      --rh-gray-600: #4D5258;
+      --rh-gray-800: #292929;
+      --section-gap: 6rem;
+      --content-max: 1100px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Red Hat Text', system-ui, -apple-system, sans-serif;
+      color: var(--rh-black);
+      background: var(--rh-white);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- NAV --- */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(21, 21, 21, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-inner {
+      max-width: var(--content-max);
+      margin: 0 auto; padding: 0 2rem;
+      display: flex; align-items: center; height: 56px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.625rem;
+      text-decoration: none; color: var(--rh-white);
+      font-family: 'Red Hat Display', sans-serif;
+      font-weight: 600; font-size: 1rem;
+    }
+    .nav-logo img { height: 28px; width: 28px; border-radius: 4px; }
+    .nav-links {
+      margin-left: auto; display: flex; gap: 1.75rem; list-style: none;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,0.7); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--rh-white); }
+
+    /* --- HERO --- */
+    .hero {
+      background: linear-gradient(160deg, var(--rh-black) 0%, #1a1a2e 50%, var(--rh-black) 100%);
+      color: var(--rh-white);
+      padding: 8rem 2rem 5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(238,0,0,0.12) 0%, transparent 60%);
+    }
+    .hero-content { position: relative; max-width: 720px; margin: 0 auto; }
+    .hero h1 {
+      font-family: 'Red Hat Display', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 700; line-height: 1.2;
+      margin-bottom: 1.25rem; letter-spacing: -0.02em;
+    }
+    .hero h1 span { color: var(--rh-red); }
+    .hero p {
+      font-size: 1.125rem; color: rgba(255,255,255,0.75);
+      max-width: 540px; margin: 0 auto 2rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.5rem; border-radius: 6px;
+      font-family: 'Red Hat Text', sans-serif;
+      font-size: 0.9375rem; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+    .btn-primary {
+      background: var(--rh-red); color: var(--rh-white);
+      border-color: var(--rh-red);
+    }
+    .btn-primary:hover { background: var(--rh-red-dark); border-color: var(--rh-red-dark); }
+    .btn-secondary {
+      background: transparent; color: var(--rh-white);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.7); }
+    .btn svg { width: 18px; height: 18px; }
+
+    .hero-screenshot {
+      margin-top: 3rem; position: relative;
+      max-width: 900px; margin-left: auto; margin-right: auto;
+    }
+    .hero-screenshot img {
+      width: 100%; border-radius: 10px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    /* --- SECTIONS --- */
+    section { padding: var(--section-gap) 2rem; }
+    .section-inner { max-width: var(--content-max); margin: 0 auto; }
+    .section-label {
+      font-family: 'Red Hat Display', sans-serif;
+      font-size: 0.8125rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--rh-red); margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: 'Red Hat Display', sans-serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+      font-weight: 700; line-height: 1.25;
+      margin-bottom: 1rem; letter-spacing: -0.015em;
+    }
+    .section-subtitle {
+      font-size: 1.0625rem; color: var(--rh-gray-600);
+      max-width: 560px; margin-bottom: 2.5rem;
+    }
+
+    /* --- FEATURES GRID --- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    .feature-card {
+      padding: 1.75rem;
+      border: 1px solid var(--rh-gray-200);
+      border-radius: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+      border-color: var(--rh-red);
+      box-shadow: 0 4px 20px rgba(238,0,0,0.08);
+    }
+    .feature-icon {
+      width: 40px; height: 40px;
+      background: rgba(238,0,0,0.08);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem; color: var(--rh-red);
+    }
+    .feature-card h3 {
+      font-family: 'Red Hat Display', sans-serif;
+      font-size: 1.0625rem; font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .feature-card p { font-size: 0.9375rem; color: var(--rh-gray-600); line-height: 1.6; }
+
+    /* --- SCREENSHOTS --- */
+    .screenshots-section { background: var(--rh-gray-100); }
+    .screenshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .screenshot-item { text-align: center; }
+    .screenshot-item img {
+      width: 100%; border-radius: 8px;
+      border: 1px solid var(--rh-gray-200);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .screenshot-item img:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .screenshot-item figcaption {
+      margin-top: 0.75rem;
+      font-size: 0.875rem; font-weight: 500;
+      color: var(--rh-gray-600);
+    }
+
+    /* --- SPLIT SECTIONS --- */
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .split-text .section-subtitle { margin-bottom: 1.5rem; }
+    .split img {
+      width: 100%; border-radius: 8px;
+      border: 1px solid var(--rh-gray-200);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    @media (max-width: 768px) {
+      .split { grid-template-columns: 1fr; gap: 2rem; }
+      .split-reverse .split-text { order: -1; }
+    }
+
+    /* --- SHORTCUTS TABLE --- */
+    .shortcuts-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.9375rem; margin-top: 1.5rem;
+    }
+    .shortcuts-table th, .shortcuts-table td {
+      text-align: left; padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--rh-gray-200);
+    }
+    .shortcuts-table th {
+      font-family: 'Red Hat Display', sans-serif;
+      font-weight: 600; font-size: 0.8125rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--rh-gray-600);
+    }
+    .shortcuts-table td:first-child {
+      font-family: 'Red Hat Mono', monospace;
+      font-size: 0.8125rem; font-weight: 500;
+    }
+    .shortcuts-table kbd {
+      background: var(--rh-gray-100);
+      border: 1px solid var(--rh-gray-200);
+      border-radius: 4px; padding: 0.125rem 0.375rem;
+      font-family: 'Red Hat Mono', monospace;
+      font-size: 0.8125rem;
+    }
+
+    /* --- INSTALL --- */
+    .install-section { background: var(--rh-gray-100); }
+    .install-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem; margin-top: 2rem;
+    }
+    .install-card {
+      background: var(--rh-white);
+      border: 1px solid var(--rh-gray-200);
+      border-radius: 10px; padding: 1.5rem;
+    }
+    .install-card h3 {
+      font-family: 'Red Hat Display', sans-serif;
+      font-size: 1rem; font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .install-card pre {
+      background: var(--rh-gray-800); color: #e0e0e0;
+      padding: 0.875rem 1rem; border-radius: 6px;
+      overflow-x: auto; font-family: 'Red Hat Mono', monospace;
+      font-size: 0.8125rem; line-height: 1.6;
+    }
+
+    /* --- FOOTER --- */
+    footer {
+      background: var(--rh-black); color: rgba(255,255,255,0.5);
+      padding: 3rem 2rem; text-align: center; font-size: 0.875rem;
+    }
+    footer a { color: var(--rh-red); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    footer p { margin-bottom: 0.5rem; }
+
+    /* --- LIGHTBOX --- */
+    .lightbox {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.9);
+      align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 92vw; max-height: 92vh;
+      border-radius: 8px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.5);
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 640px) {
+      .nav-links { gap: 1rem; }
+      .nav-links a { font-size: 0.8125rem; }
+      .hero { padding: 7rem 1.25rem 3rem; }
+      section { padding: 3.5rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <img src="icons/icon.png" alt="Red Hat fedora icon">
+      <span>Cost Management Desktop</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#shortcuts">Shortcuts</a></li>
+      <li><a href="https://github.com/pgarciaq/koku-desktop">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-content">
+    <h1>Red Hat Lightspeed<br><span>Cost Management</span> Desktop</h1>
+    <p>A lightweight native desktop client for Red Hat Cost Management. Connect to console.redhat.com or your private on-prem instance.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/pgarciaq/koku-desktop/releases" class="btn btn-primary">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V4h3v4H12L8 12zM3 14h10v-1H3v1z"/></svg>
+        Download
+      </a>
+      <a href="https://github.com/pgarciaq/koku-desktop" class="btn btn-secondary">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Source Code
+      </a>
+    </div>
+  </div>
+  <div class="hero-screenshot">
+    <img src="images/main_screen.png" alt="Cost Management Desktop — Overview dashboard showing OpenShift costs, CPU/memory/volume usage">
+  </div>
+</header>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Everything you need, on your desktop</h2>
+    <p class="section-subtitle">Built with Tauri v2 for a fast, lightweight experience. No Electron bloat &mdash; uses your system&rsquo;s native webview.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
+        </div>
+        <h3>Connection Profiles</h3>
+        <p>Save multiple named server configurations &mdash; SaaS and private on-prem instances &mdash; and switch between them instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+        </div>
+        <h3>Flexible Authentication</h3>
+        <p>Offline Token, Username &amp; Password, Service Account, or Developer mode. Works with Red Hat SSO and any Keycloak instance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+        </div>
+        <h3>Light &amp; Dark Themes</h3>
+        <p>Choose light, dark, or follow your system preference. The unified titlebar adapts seamlessly to both themes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/></svg>
+        </div>
+        <h3>Unified Titlebar</h3>
+        <p>Menus, window controls, and user profile merged into a single compact bar &mdash; inspired by JetBrains IDEs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+        </div>
+        <h3>System Tray</h3>
+        <p>Minimize to the system tray. Quick access to restore the window, open settings, or quit from the tray menu.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </div>
+        <h3>Native File Dialogs</h3>
+        <p>CSV exports open a native &ldquo;Save As&rdquo; dialog. Print any page with Ctrl+P using your system printers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section id="screenshots" class="screenshots-section">
+  <div class="section-inner">
+    <p class="section-label">Screenshots</p>
+    <h2 class="section-title">See it in action</h2>
+    <p class="section-subtitle">Click any screenshot to enlarge.</p>
+
+    <div class="screenshots-grid">
+      <figure class="screenshot-item">
+        <img src="images/main_screen.png" alt="Overview dashboard" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Cost Management overview with charts and top projects</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/dark_mode.png" alt="Dark mode — AWS details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Dark mode &mdash; AWS service breakdown</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/openshift_details.png" alt="OpenShift details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>OpenShift project details with cost model overhead</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/navigation_menu.png" alt="Navigation menu" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Navigate menu with keyboard shortcuts</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/instance_selection.png" alt="Private instance configuration" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Private instance with Username &amp; Password auth</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/profile_selection.png" alt="Profile selector dropdown" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Switch between saved connection profiles</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/authentication_modes.png" alt="Authentication settings" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>SaaS mode with service account authentication</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/system-tray.png" alt="System tray menu" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>System tray with quick actions</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- PROFILES -->
+<section id="profiles">
+  <div class="section-inner">
+    <div class="split">
+      <div class="split-text">
+        <p class="section-label">Connection Profiles</p>
+        <h2 class="section-title">One app, many instances</h2>
+        <p class="section-subtitle">Save named profiles for Red Hat Hybrid Cloud Console (SaaS) and any number of private on-prem Cost Management instances. Each profile stores its own server URL, authentication method, and credentials. Switch with a single click.</p>
+        <p class="section-subtitle">The built-in SaaS profile is always available and cannot be deleted. Create as many private profiles as you need.</p>
+      </div>
+      <img src="images/profile_selection.png" alt="Profile selection dropdown showing SaaS and UXSNO profiles">
+    </div>
+  </div>
+</section>
+
+<!-- AUTH -->
+<section class="screenshots-section">
+  <div class="section-inner">
+    <div class="split split-reverse">
+      <img src="images/authentication_modes.png" alt="Authentication settings showing offline token, username & password, and service account options">
+      <div class="split-text">
+        <p class="section-label">Authentication</p>
+        <h2 class="section-title">Four ways to connect</h2>
+        <p class="section-subtitle">Choose the auth method that fits your environment:</p>
+        <ul style="color: var(--rh-gray-600); font-size: 0.9375rem; padding-left: 1.25rem; line-height: 2;">
+          <li><strong>Offline Token</strong> &mdash; personal Red Hat account, recommended for SaaS</li>
+          <li><strong>Username &amp; Password</strong> &mdash; Keycloak password grant, best for on-prem</li>
+          <li><strong>Service Account</strong> &mdash; client credentials grant, for automation</li>
+          <li><strong>Developer mode</strong> &mdash; no auth, for local development</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHORTCUTS -->
+<section id="shortcuts">
+  <div class="section-inner">
+    <p class="section-label">Productivity</p>
+    <h2 class="section-title">Keyboard shortcuts</h2>
+    <p class="section-subtitle">Navigate Cost Management without touching your mouse.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <div>
+        <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 0.5rem;">Navigation</h3>
+        <table class="shortcuts-table">
+          <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>H</kbd></td><td>Overview</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>OpenShift</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>W</kbd></td><td>AWS</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>U</kbd></td><td>Azure</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Google Cloud</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td><td>Cost Explorer</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Cost Settings</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 0.5rem;">Identity &amp; Access</h3>
+        <table class="shortcuts-table">
+          <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>W</kbd></td><td>IAM Overview</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd></td><td>Users</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></td><td>Groups</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></td><td>Roles</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>M</kbd></td><td>My User Access</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd></td><td>Toggle theme</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Print page</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install" class="install-section">
+  <div class="section-inner">
+    <p class="section-label">Get Started</p>
+    <h2 class="section-title">Installation</h2>
+    <p class="section-subtitle">Build from source or install a package.</p>
+
+    <div class="install-grid">
+      <div class="install-card">
+        <h3>Build from source</h3>
+        <pre><code>git clone https://github.com/pgarciaq/koku-desktop.git
+cd koku-desktop
+./scripts/build-ui.sh
+npx tauri build</code></pre>
+      </div>
+      <div class="install-card">
+        <h3>Install RPM (Fedora / RHEL)</h3>
+        <pre><code>sudo rpm -i "src-tauri/target/release/bundle/rpm/\
+Cost Management Desktop-0.1.0-1.x86_64.rpm"</code></pre>
+      </div>
+      <div class="install-card">
+        <h3>Install DEB (Debian / Ubuntu)</h3>
+        <pre><code>sudo dpkg -i "src-tauri/target/release/bundle/deb/\
+Cost Management Desktop_0.1.0_amd64.deb"</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section>
+  <div class="section-inner" style="text-align: center;">
+    <p class="section-label">Built With</p>
+    <h2 class="section-title">Technology</h2>
+    <div style="display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; color: var(--rh-gray-600); font-size: 0.9375rem; font-weight: 500;">
+      <span>Tauri v2</span>
+      <span>Rust</span>
+      <span>Axum</span>
+      <span>React 18</span>
+      <span>PatternFly 6</span>
+      <span>TypeScript</span>
+      <span>GTK 3</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Red Hat Lightspeed Cost Management Desktop</p>
+  <p>Apache-2.0 &mdash; <a href="https://github.com/pgarciaq/koku-desktop">GitHub</a> &mdash; Part of the <a href="https://github.com/project-koku/koku">Project Koku</a> ecosystem</p>
+  <p style="margin-top: 1rem;">Red Hat and the Red Hat logo are trademarks of Red Hat, Inc.</p>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+function openLightbox(img) {
+  var lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = img.src;
+  lb.classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
+
+</body>
+</html>
