@@ -39,6 +39,8 @@
       --color-error: #c9190b;
       --color-error-bg: #fef2f0;
       --color-focus: #0066cc;
+      --color-danger: #c9190b;
+      --color-danger-hover: #a30000;
       --shadow-sm: 0 1px 2px rgba(21, 21, 21, 0.08);
       --radius: 8px;
     }
@@ -56,6 +58,8 @@
       --color-success-bg: #1a2e18;
       --color-error: #fe5142;
       --color-error-bg: #3d1511;
+      --color-danger: #fe5142;
+      --color-danger-hover: #ff7468;
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     }
 
@@ -68,7 +72,7 @@
       color: var(--color-text); background: var(--color-bg);
     }
 
-    .page { max-width: 640px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .page { max-width: 640px; margin: 0 auto; padding: 2rem 1.5rem 3rem; overflow-y: auto; max-height: 100vh; }
 
     .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
     .header__icon { flex-shrink: 0; width: 2.5rem; height: 2.5rem; }
@@ -169,6 +173,9 @@
     .btn-outline { background: transparent; color: var(--color-text); border-color: var(--color-border); }
     .btn-outline:hover:not(:disabled) { border-color: var(--color-text-secondary); }
 
+    .btn-danger { background: transparent; color: var(--color-danger); border-color: var(--color-danger); }
+    .btn-danger:hover:not(:disabled) { background: var(--color-danger); color: #fff; }
+
     .test-result {
       display: flex; align-items: center; gap: 0.5rem;
       margin-top: 0.75rem; padding: 0.625rem 0.75rem; border-radius: 4px; font-size: 0.8125rem;
@@ -188,6 +195,10 @@
     .footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 0.5rem; }
     .footer .btn-primary { flex: 1; }
 
+    .profile-header { display: flex; gap: 0.75rem; align-items: flex-end; margin-bottom: 1rem; }
+    .profile-header .field { flex: 1; margin-bottom: 0; }
+    .profile-actions { display: flex; gap: 0.5rem; }
+
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -203,24 +214,41 @@
     </header>
 
     <form id="settings-form" novalidate>
-      <!-- Connection -->
-      <section class="card" aria-labelledby="connection-heading">
-        <h2 class="section-title" id="connection-heading">Connection</h2>
-        <fieldset class="radio-group" role="radiogroup" aria-label="Connection mode">
-          <label class="radio-option">
-            <input type="radio" name="connection_mode" value="saas" id="conn-saas">
-            <span class="radio-content">
-              <span>Red Hat Hybrid Cloud Console (SaaS)</span>
-              <span class="hint">Connects to console.redhat.com</span>
-            </span>
-          </label>
-          <label class="radio-option">
-            <input type="radio" name="connection_mode" value="private" id="conn-private" checked>
-            <span class="radio-content">
-              <span>Private Cost Management instance</span>
-            </span>
-          </label>
-        </fieldset>
+      <!-- Connection Profile -->
+      <section class="card" aria-labelledby="profile-heading">
+        <h2 class="section-title" id="profile-heading">Connection Profile</h2>
+        <div class="profile-header">
+          <div class="field">
+            <label for="profile-select">Profile</label>
+            <select id="profile-select"></select>
+          </div>
+          <div class="profile-actions">
+            <button type="button" class="btn btn-danger" id="delete-profile-btn" title="Delete this profile" hidden>Delete</button>
+          </div>
+        </div>
+
+        <div class="field" id="profile-name-field">
+          <label for="profile-name">Profile Name</label>
+          <input type="text" id="profile-name" placeholder="e.g. Production UXSNO" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div id="connection-mode-group">
+          <fieldset class="radio-group" role="radiogroup" aria-label="Connection mode">
+            <label class="radio-option">
+              <input type="radio" name="connection_mode" value="saas" id="conn-saas">
+              <span class="radio-content">
+                <span>Red Hat Hybrid Cloud Console (SaaS)</span>
+                <span class="hint">Connects to console.redhat.com</span>
+              </span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="connection_mode" value="private" id="conn-private" checked>
+              <span class="radio-content">
+                <span>Private Cost Management instance</span>
+              </span>
+            </label>
+          </fieldset>
+        </div>
 
         <div id="private-url-panel" class="indent">
           <div class="field-row">
@@ -246,24 +274,54 @@
             </span>
           </label>
           <label class="radio-option">
+            <input type="radio" name="auth_method" value="password" id="auth-password">
+            <span class="radio-content">
+              <span>Username &amp; Password</span>
+              <span class="hint">Authenticates with your Keycloak username and password (plus client credentials). Best for private on-prem instances.</span>
+            </span>
+          </label>
+          <label class="radio-option">
             <input type="radio" name="auth_method" value="service_account" id="auth-service-account" checked>
             <span class="radio-content">
               <span>Service Account</span>
-              <span class="hint">Uses a Client ID and Client Secret. For automation or when offline tokens are not available.</span>
+              <span class="hint">Uses a Client ID and Client Secret with client_credentials grant. The Keycloak client must have "Service Accounts Enabled".</span>
             </span>
           </label>
         </fieldset>
 
-        <!-- Offline Token fields -->
         <div id="offline-token-panel" class="indent" hidden>
           <div class="field">
             <label for="offline-token">Offline Token</label>
             <input type="password" id="offline-token" placeholder="Paste your offline token here" autocomplete="off" spellcheck="false">
-            <p class="hint">A long-lived token tied to your Red Hat account. Generate one at <a href="https://access.redhat.com/management/api" target="_blank" rel="noopener">access.redhat.com/management/api</a> → "Generate Token".</p>
+            <p class="hint">A long-lived token tied to your Red Hat account. Generate one at <a href="https://access.redhat.com/management/api" target="_blank" rel="noopener">access.redhat.com/management/api</a> &rarr; "Generate Token".</p>
           </div>
         </div>
 
-        <!-- Service Account fields -->
+        <!-- Password grant fields -->
+        <div id="password-panel" class="indent" hidden>
+          <div class="field">
+            <label for="kc-username">Username</label>
+            <input type="text" id="kc-username" placeholder="e.g. admin" autocomplete="username" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="kc-password">Password</label>
+            <input type="password" id="kc-password" autocomplete="current-password">
+          </div>
+          <div class="field">
+            <label for="pw-client-id">Client ID</label>
+            <input type="text" id="pw-client-id" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="pw-client-secret">Client Secret</label>
+            <input type="password" id="pw-client-secret" autocomplete="off">
+          </div>
+          <div class="field" id="pw-token-endpoint-field">
+            <label for="pw-token-endpoint">Token Endpoint URL</label>
+            <input type="text" id="pw-token-endpoint" placeholder="https://keycloak.example.com/realms/my-realm/protocol/openid-connect/token" autocomplete="url" spellcheck="false">
+            <p class="hint">The OpenID Connect token endpoint of your Keycloak instance.</p>
+          </div>
+        </div>
+
         <div id="service-account-panel" class="indent">
           <div class="field">
             <label for="display-name">Display Name</label>
@@ -371,6 +429,9 @@
         };
       }
 
+      var SAAS_ID = "saas";
+      var NEW_PROFILE_VALUE = "__new__";
+
       var DEFAULT_IDENTITY = {
         identity: {
           account_number: "10001",
@@ -383,6 +444,11 @@
 
       var els = {
         form: document.getElementById("settings-form"),
+        profileSelect: document.getElementById("profile-select"),
+        deleteProfileBtn: document.getElementById("delete-profile-btn"),
+        profileName: document.getElementById("profile-name"),
+        profileNameField: document.getElementById("profile-name-field"),
+        connectionModeGroup: document.getElementById("connection-mode-group"),
         connSaas: document.getElementById("conn-saas"),
         connPrivate: document.getElementById("conn-private"),
         privateUrlPanel: document.getElementById("private-url-panel"),
@@ -390,10 +456,18 @@
         testBtn: document.getElementById("test-connection-btn"),
         testResult: document.getElementById("test-result"),
         authOfflineToken: document.getElementById("auth-offline-token"),
+        authPassword: document.getElementById("auth-password"),
         authServiceAccount: document.getElementById("auth-service-account"),
         offlineTokenPanel: document.getElementById("offline-token-panel"),
+        passwordPanel: document.getElementById("password-panel"),
         serviceAccountPanel: document.getElementById("service-account-panel"),
         offlineToken: document.getElementById("offline-token"),
+        kcUsername: document.getElementById("kc-username"),
+        kcPassword: document.getElementById("kc-password"),
+        pwClientId: document.getElementById("pw-client-id"),
+        pwClientSecret: document.getElementById("pw-client-secret"),
+        pwTokenEndpoint: document.getElementById("pw-token-endpoint"),
+        pwTokenEndpointField: document.getElementById("pw-token-endpoint-field"),
         displayName: document.getElementById("display-name"),
         clientId: document.getElementById("client-id"),
         clientSecret: document.getElementById("client-secret"),
@@ -414,7 +488,15 @@
         cancelBtn: document.getElementById("cancel-btn")
       };
 
-      var hasExistingConfig = false;
+      var appConfig = null;
+      var currentProfileId = null;
+
+      function generateId() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0;
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+      }
 
       function resolveTheme(theme) {
         if (theme === "system") {
@@ -427,18 +509,182 @@
         document.documentElement.setAttribute("data-theme", resolveTheme(theme));
       }
 
+      function findProfile(id) {
+        if (!appConfig) return null;
+        return appConfig.profiles.find(function(p) { return p.id === id; }) || null;
+      }
+
+      function rebuildProfileSelect() {
+        var sel = els.profileSelect;
+        sel.innerHTML = "";
+        appConfig.profiles.forEach(function(p) {
+          var opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          sel.appendChild(opt);
+        });
+        var newOpt = document.createElement("option");
+        newOpt.value = NEW_PROFILE_VALUE;
+        newOpt.textContent = "+ New profile\u2026";
+        sel.appendChild(newOpt);
+        sel.value = currentProfileId || appConfig.active_profile;
+      }
+
+      function selectedAuthMode() {
+        if (els.authOfflineToken.checked) return "offline_token";
+        if (els.authPassword.checked) return "password";
+        return "service_account";
+      }
+
       function updatePanels() {
         var isSaas = els.connSaas.checked;
-        var isOfflineToken = els.authOfflineToken.checked;
+        var authMode = selectedAuthMode();
         var devMode = els.devModeToggle.checked;
 
         els.privateUrlPanel.hidden = isSaas;
         els.tokenEndpointField.hidden = isSaas;
+        els.pwTokenEndpointField.hidden = isSaas;
 
-        els.offlineTokenPanel.hidden = !isOfflineToken || devMode;
-        els.serviceAccountPanel.hidden = isOfflineToken || devMode;
+        els.offlineTokenPanel.hidden = authMode !== "offline_token" || devMode;
+        els.passwordPanel.hidden = authMode !== "password" || devMode;
+        els.serviceAccountPanel.hidden = authMode !== "service_account" || devMode;
 
         els.devFields.hidden = !devMode;
+
+        var isSaasProfile = currentProfileId === SAAS_ID;
+        els.profileNameField.hidden = isSaasProfile;
+        els.connectionModeGroup.hidden = isSaasProfile;
+        els.deleteProfileBtn.hidden = isSaasProfile || appConfig.profiles.length <= 1;
+
+        if (isSaasProfile) {
+          els.connSaas.checked = true;
+          els.privateUrlPanel.hidden = true;
+          els.tokenEndpointField.hidden = true;
+          els.pwTokenEndpointField.hidden = true;
+        }
+      }
+
+      function saveFormToProfile() {
+        var profile = findProfile(currentProfileId);
+        if (!profile) return;
+        if (currentProfileId !== SAAS_ID) {
+          profile.name = els.profileName.value.trim() || "Unnamed";
+          profile.connection_mode = els.connSaas.checked ? "saas" : "private";
+        }
+        profile.server_url = els.serverUrl.value.trim();
+        profile.auth_mode = els.devModeToggle.checked
+          ? "dev"
+          : selectedAuthMode();
+
+        if (selectedAuthMode() === "password") {
+          profile.service_account = {
+            client_id: els.pwClientId.value.trim(),
+            client_secret: els.pwClientSecret.value,
+            token_endpoint: els.pwTokenEndpoint.value.trim(),
+            display_name: ""
+          };
+        } else {
+          profile.service_account = {
+            client_id: els.clientId.value.trim(),
+            client_secret: els.clientSecret.value,
+            token_endpoint: els.tokenEndpoint.value.trim(),
+            display_name: els.displayName.value.trim()
+          };
+        }
+        profile.offline_token = els.offlineToken.value.trim();
+        profile.kc_username = els.kcUsername.value.trim();
+        profile.kc_password = els.kcPassword.value;
+      }
+
+      function loadProfileToForm(profile) {
+        currentProfileId = profile.id;
+        els.profileName.value = profile.name || "";
+        if (profile.connection_mode === "saas") {
+          els.connSaas.checked = true;
+        } else {
+          els.connPrivate.checked = true;
+        }
+        els.serverUrl.value = profile.server_url || "";
+
+        if (profile.auth_mode === "offline_token") {
+          els.authOfflineToken.checked = true;
+        } else if (profile.auth_mode === "password") {
+          els.authPassword.checked = true;
+        } else {
+          els.authServiceAccount.checked = true;
+        }
+        els.offlineToken.value = profile.offline_token || "";
+        els.kcUsername.value = profile.kc_username || "";
+        els.kcPassword.value = profile.kc_password || "";
+
+        if (profile.auth_mode === "password") {
+          els.pwClientId.value = profile.service_account?.client_id || "";
+          els.pwClientSecret.value = profile.service_account?.client_secret || "";
+          els.pwTokenEndpoint.value = profile.service_account?.token_endpoint || "";
+          els.displayName.value = "";
+          els.clientId.value = "";
+          els.clientSecret.value = "";
+          els.tokenEndpoint.value = "";
+        } else {
+          els.displayName.value = profile.service_account?.display_name || "";
+          els.clientId.value = profile.service_account?.client_id || "";
+          els.clientSecret.value = profile.service_account?.client_secret || "";
+          els.tokenEndpoint.value = profile.service_account?.token_endpoint || "";
+          els.pwClientId.value = "";
+          els.pwClientSecret.value = "";
+          els.pwTokenEndpoint.value = "";
+        }
+
+        var isDev = profile.auth_mode === "dev";
+        els.devModeToggle.checked = isDev;
+        if (isDev) {
+          els.devSection.open = true;
+        }
+
+        hideTestResult();
+        updatePanels();
+      }
+
+      function switchToProfile(id) {
+        if (currentProfileId && currentProfileId !== id) {
+          saveFormToProfile();
+        }
+        var profile = findProfile(id);
+        if (profile) {
+          loadProfileToForm(profile);
+          els.profileSelect.value = id;
+        }
+      }
+
+      function createNewProfile() {
+        saveFormToProfile();
+        var newProfile = {
+          id: generateId(),
+          name: "",
+          connection_mode: "private",
+          server_url: "",
+          auth_mode: "password",
+          service_account: { client_id: "", client_secret: "", token_endpoint: "", display_name: "" },
+          offline_token: "",
+          kc_username: "",
+          kc_password: ""
+        };
+        appConfig.profiles.push(newProfile);
+        currentProfileId = newProfile.id;
+        rebuildProfileSelect();
+        loadProfileToForm(newProfile);
+        els.profileName.focus();
+      }
+
+      function deleteCurrentProfile() {
+        if (currentProfileId === SAAS_ID) return;
+        if (appConfig.profiles.length <= 1) return;
+        if (!confirm("Delete profile \"" + (findProfile(currentProfileId)?.name || "Unnamed") + "\"?")) return;
+
+        appConfig.profiles = appConfig.profiles.filter(function(p) { return p.id !== currentProfileId; });
+        currentProfileId = appConfig.profiles[0].id;
+        rebuildProfileSelect();
+        loadProfileToForm(appConfig.profiles[0]);
       }
 
       function buildIdentityFromFields() {
@@ -469,64 +715,35 @@
         }
       }
 
-      function buildConfig() {
-        var connMode = els.connSaas.checked ? "saas" : "private";
-        var authMode = els.devModeToggle.checked
-          ? "dev"
-          : els.authOfflineToken.checked
-            ? "offline_token"
-            : "service_account";
+      function buildFullConfig() {
+        saveFormToProfile();
+
+        var profile = findProfile(currentProfileId);
+        if (profile && !profile.name.trim()) {
+          profile.name = profile.connection_mode === "saas"
+            ? "Red Hat Hybrid Cloud Console"
+            : (profile.server_url || "Unnamed");
+        }
 
         return {
-          connection_mode: connMode,
-          server_url: els.serverUrl.value.trim(),
-          auth_mode: authMode,
+          active_profile: currentProfileId,
+          profiles: appConfig.profiles,
           theme: els.themeSelect.value,
           modules: {
             ros: els.moduleRos.checked,
             sources: els.moduleSources.checked
           },
-          service_account: {
-            client_id: els.clientId.value.trim(),
-            client_secret: els.clientSecret.value,
-            token_endpoint: els.tokenEndpoint.value.trim(),
-            display_name: els.displayName.value.trim()
-          },
-          offline_token: els.offlineToken.value.trim(),
-          dev_identity: els.devModeToggle.checked ? parseIdentityJson() : DEFAULT_IDENTITY
+          dev_identity: els.devModeToggle.checked ? parseIdentityJson() : (appConfig.dev_identity || DEFAULT_IDENTITY)
         };
       }
 
-      function populateForm(config) {
-        if (config.connection_mode === "saas") {
-          els.connSaas.checked = true;
-        } else {
-          els.connPrivate.checked = true;
-        }
-        els.serverUrl.value = config.server_url || "";
-
-        if (config.auth_mode === "offline_token") {
-          els.authOfflineToken.checked = true;
-        } else {
-          els.authServiceAccount.checked = true;
-        }
-        els.offlineToken.value = config.offline_token || "";
-
-        els.displayName.value = config.service_account?.display_name || "";
-        els.clientId.value = config.service_account?.client_id || "";
-        els.clientSecret.value = config.service_account?.client_secret || "";
-        els.tokenEndpoint.value = config.service_account?.token_endpoint || "";
+      function populateFromConfig(config) {
+        appConfig = config;
 
         els.moduleRos.checked = config.modules?.ros !== false;
         els.moduleSources.checked = config.modules?.sources !== false;
         els.themeSelect.value = config.theme || "system";
         applyTheme(els.themeSelect.value);
-
-        var isDev = config.auth_mode === "dev";
-        els.devModeToggle.checked = isDev;
-        if (isDev) {
-          els.devSection.open = true;
-        }
 
         var id = config.dev_identity || DEFAULT_IDENTITY;
         var user = id?.identity?.user || {};
@@ -536,7 +753,10 @@
         els.devAccount.value = id?.identity?.account_number || "10001";
         els.devIdentityJson.value = JSON.stringify(id, null, 2);
 
-        updatePanels();
+        currentProfileId = config.active_profile;
+        rebuildProfileSelect();
+        var active = findProfile(config.active_profile) || config.profiles[0];
+        loadProfileToForm(active);
       }
 
       function showTestResult(type, html) {
@@ -591,7 +811,7 @@
         event.preventDefault();
         els.saveBtn.disabled = true;
         try {
-          await invoke("save_config", { config: buildConfig() });
+          await invoke("save_config", { config: buildFullConfig() });
           window.location.href = "/";
         } catch (err) {
           alert("Failed to save configuration: " + (err?.message || err));
@@ -604,31 +824,44 @@
 
         try {
           var config = await invoke("get_config");
-          if (config && (config.server_url || config.connection_mode === "saas")) {
-            hasExistingConfig = true;
-            populateForm(config);
+          if (config && config.profiles && config.profiles.length > 0) {
+            populateFromConfig(config);
             els.cancelBtn.hidden = false;
           } else {
-            populateForm({
-              connection_mode: "private",
-              server_url: "",
-              auth_mode: "service_account",
+            populateFromConfig({
+              active_profile: SAAS_ID,
+              profiles: [{
+                id: SAAS_ID,
+                name: "Red Hat Hybrid Cloud Console",
+                connection_mode: "saas",
+                server_url: "",
+                auth_mode: "offline_token",
+                service_account: { client_id: "", client_secret: "", token_endpoint: "", display_name: "" },
+                offline_token: "",
+                kc_username: "",
+                kc_password: ""
+              }],
               theme: "system",
               modules: { ros: true, sources: true },
-              service_account: { client_id: "", client_secret: "", token_endpoint: "" },
-              offline_token: "",
               dev_identity: DEFAULT_IDENTITY
             });
           }
         } catch (e) {
-          populateForm({
-            connection_mode: "private",
-            server_url: "",
-            auth_mode: "service_account",
+          populateFromConfig({
+            active_profile: SAAS_ID,
+            profiles: [{
+              id: SAAS_ID,
+              name: "Red Hat Hybrid Cloud Console",
+              connection_mode: "saas",
+              server_url: "",
+              auth_mode: "offline_token",
+              service_account: { client_id: "", client_secret: "", token_endpoint: "", display_name: "" },
+              offline_token: "",
+              kc_username: "",
+              kc_password: ""
+            }],
             theme: "system",
             modules: { ros: true, sources: true },
-            service_account: { client_id: "", client_secret: "", token_endpoint: "" },
-            offline_token: "",
             dev_identity: DEFAULT_IDENTITY
           });
         }
@@ -636,6 +869,17 @@
         syncJsonFromFields();
       }
 
+      els.profileSelect.addEventListener("change", function () {
+        var val = els.profileSelect.value;
+        if (val === NEW_PROFILE_VALUE) {
+          createNewProfile();
+        } else {
+          switchToProfile(val);
+        }
+        rebuildProfileSelect();
+      });
+
+      els.deleteProfileBtn.addEventListener("click", deleteCurrentProfile);
       els.testBtn.addEventListener("click", testConnection);
       els.form.addEventListener("submit", saveConfig);
       els.cancelBtn.addEventListener("click", function () { window.location.href = "/"; });

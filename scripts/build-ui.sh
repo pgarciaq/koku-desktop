@@ -47,8 +47,8 @@ resolve_koku_ui_dir() {
   fi
 
   local candidates=(
-    "$HOME/dev/koku/koku-ui"
     "$PROJECT_DIR/../koku-ui"
+    "$HOME/dev/koku/koku-ui"
   )
 
   for dir in "${candidates[@]}"; do
@@ -127,10 +127,15 @@ copy_dist \
   "$KOKU_UI_DIR/apps/koku-ui-sources/dist" \
   "$UI_DEST/sources" \
   "Sources"
+copy_dist \
+  "$KOKU_UI_DIR/apps/rbac-ui-onprem/dist" \
+  "$UI_DEST/rbac" \
+  "RBAC / IAM (insightsRbac)"
 
 echo
 echo "Build complete. Summary:"
-echo "  ui/                  <- apps/koku-ui-onprem/dist"
-echo "  ui/costManagement/   <- apps/koku-ui-hccm/dist"
+echo "  ui/                   <- apps/koku-ui-onprem/dist"
+echo "  ui/costManagement/    <- apps/koku-ui-hccm/dist"
 echo "  ui/costManagementRos/ <- apps/koku-ui-ros/dist"
-echo "  ui/sources/          <- apps/koku-ui-sources/dist"
+echo "  ui/sources/           <- apps/koku-ui-sources/dist"
+echo "  ui/rbac/              <- apps/rbac-ui-onprem/dist"

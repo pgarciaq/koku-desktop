@@ -1,9 +1,11 @@
 mod dev;
 mod offline_token;
+mod password;
 mod service_account;
 
 pub use dev::DevAuthProvider;
 pub use offline_token::OfflineTokenAuthProvider;
+pub use password::PasswordAuthProvider;
 pub use service_account::ServiceAccountAuthProvider;
 
 use reqwest::header::HeaderMap;

@@ -29,4 +29,5 @@ http = "1"
 mime_guess = "2"
 log = "0.4"
 url = "2"
+uuid = { version = "1", features = ["v4"] }
 gtk = "0.18"

@@ -4,8 +4,11 @@ mod auth;
 mod config;
 mod proxy;
 
-use auth::{AuthProvider, DevAuthProvider, OfflineTokenAuthProvider, ServiceAccountAuthProvider};
-use config::{AppConfig, AuthMode, Theme};
+use auth::{
+    AuthProvider, DevAuthProvider, OfflineTokenAuthProvider, PasswordAuthProvider,
+    ServiceAccountAuthProvider,
+};
+use config::{AppConfig, AuthMode, ConnectionProfile, Theme};
 use proxy::ProxyServer;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -29,22 +32,30 @@ fn project_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
 }
 
-fn create_auth_provider(config: &AppConfig) -> anyhow::Result<Arc<dyn AuthProvider>> {
-    match config.auth_mode {
-        AuthMode::Dev => Ok(Arc::new(DevAuthProvider::new(
-            config.dev_identity.clone(),
-        )?)),
+fn create_auth_provider(
+    profile: &ConnectionProfile,
+    dev_identity: &serde_json::Value,
+) -> anyhow::Result<Arc<dyn AuthProvider>> {
+    match profile.auth_mode {
+        AuthMode::Dev => Ok(Arc::new(DevAuthProvider::new(dev_identity.clone())?)),
         AuthMode::ServiceAccount => Ok(Arc::new(ServiceAccountAuthProvider::new(
-            config.effective_token_endpoint().to_string(),
-            config.service_account.client_id.clone(),
-            config.service_account.client_secret.clone(),
-            config.service_account.display_name.clone(),
-            config.is_saas(),
+            profile.effective_token_endpoint().to_string(),
+            profile.service_account.client_id.clone(),
+            profile.service_account.client_secret.clone(),
+            profile.service_account.display_name.clone(),
+            profile.is_saas(),
         ))),
         AuthMode::OfflineToken => Ok(Arc::new(OfflineTokenAuthProvider::new(
-            config.effective_token_endpoint().to_string(),
-            config.offline_token.clone(),
-            config.is_saas(),
+            profile.effective_token_endpoint().to_string(),
+            profile.offline_token.clone(),
+            profile.is_saas(),
+        ))),
+        AuthMode::Password => Ok(Arc::new(PasswordAuthProvider::new(
+            profile.effective_token_endpoint().to_string(),
+            profile.service_account.client_id.clone(),
+            profile.service_account.client_secret.clone(),
+            profile.kc_username.clone(),
+            profile.kc_password.clone(),
         ))),
     }
 }
@@ -164,7 +175,9 @@ fn get_config(state: State<'_, AppState>) -> Result<AppConfig, String> {
 #[tauri::command]
 async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<(), String> {
     config.save().map_err(|e| e.to_string())?;
-    let auth = create_auth_provider(&config).map_err(|e| e.to_string())?;
+    let profile = config.active_profile().clone();
+    let auth =
+        create_auth_provider(&profile, &config.dev_identity).map_err(|e| e.to_string())?;
 
     *state.config.write().await = config;
     *state.auth.write().await = auth;
@@ -259,7 +272,7 @@ fn get_about_info() -> Result<serde_json::Value, String> {
 async fn get_server_status(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let (server_url, auth) = {
         let config = state.config.read().await;
-        let server_url = config.effective_server_url().trim_end_matches('/').to_string();
+        let server_url = config.active_profile().effective_server_url().trim_end_matches('/').to_string();
         let auth = state.auth.read().await.clone();
         (server_url, auth)
     };
@@ -301,8 +314,9 @@ fn main() {
 
     let loaded_config = AppConfig::load().expect("failed to load configuration");
     let first_launch = AppConfig::is_first_launch();
-    let auth_provider =
-        create_auth_provider(&loaded_config).expect("failed to create auth provider");
+    let active = loaded_config.active_profile().clone();
+    let auth_provider = create_auth_provider(&active, &loaded_config.dev_identity)
+        .expect("failed to create auth provider");
     let config = Arc::new(RwLock::new(loaded_config));
     let auth = Arc::new(RwLock::new(auth_provider));
 
@@ -374,13 +388,15 @@ fn main() {
                     .join("Downloads")
             });
 
+            let splash_url = proxy_url(proxy_port, "/_splash/");
+            let actual_start_url = start_url.clone();
             let main_window = WebviewWindowBuilder::new(
                 app,
                 "main",
                 WebviewUrl::External(
-                    start_url
+                    splash_url
                         .parse()
-                        .map_err(|e| anyhow::anyhow!("invalid start URL: {e}"))?,
+                        .map_err(|e| anyhow::anyhow!("invalid splash URL: {e}"))?,
                 ),
             )
             .title("Red Hat Lightspeed Cost Management Desktop")
@@ -452,21 +468,28 @@ fn main() {
             //   - https://github.com/velitasali/gtktitlebar (GNOME extension approach)
             #[cfg(target_os = "linux")]
             {
-                use gtk::prelude::{CssProviderExt, GtkWindowExt, WidgetExt};
+                use gtk::prelude::{CssProviderExt, GtkWindowExt, StyleContextExt, WidgetExt};
+
+                let gtk_window = main_window.gtk_window()
+                    .map_err(|e| anyhow::anyhow!("failed to get GTK window: {e}"))?;
+
+                // Tag our window so CSS rules only apply to it, not tray popups
+                gtk_window.style_context().add_class("kd-main");
 
                 let css = gtk::CssProvider::new();
                 css.load_from_data(
-                    b"headerbar, .titlebar { \
+                    b"window.kd-main headerbar, \
+                      window.kd-main .titlebar { \
                         min-height: 0; padding: 0; margin: 0; border: 0; \
                         background: transparent; box-shadow: none; \
                       } \
-                      decoration, decoration:backdrop { \
+                      window.kd-main decoration, \
+                      window.kd-main decoration:backdrop { \
                         margin: 0; border: none; padding: 0; \
                         box-shadow: none; border-radius: 0; \
                         outline: none; \
                       } \
-                      .background { border-radius: 0; } \
-                      window, window.background, window.background.csd { \
+                      window.kd-main.background.csd { \
                         border-radius: 0; box-shadow: none; \
                         margin: 0; padding: 0; border: none; outline: none; \
                       }",
@@ -478,20 +501,21 @@ fn main() {
                     gtk::STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
                 );
 
-                let gtk_window = main_window.gtk_window()
-                    .map_err(|e| anyhow::anyhow!("failed to get GTK window: {e}"))?;
                 let empty = gtk::Box::new(gtk::Orientation::Horizontal, 0);
                 empty.set_size_request(-1, 0);
                 gtk_window.set_titlebar(Some(&empty));
             }
 
-            main_window.navigate(
-                start_url
-                    .parse()
-                    .map_err(|e| anyhow::anyhow!("invalid start URL: {e}"))?,
-            )?;
-            main_window.show()?;
-            main_window.set_focus()?;
+            // Navigate from splash to actual content after a short delay
+            let app_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_secs(2));
+                if let Some(win) = app_handle.get_webview_window("main") {
+                    let _ = win.navigate(
+                        actual_start_url.parse().expect("invalid start URL"),
+                    );
+                }
+            });
 
             Ok(())
         })

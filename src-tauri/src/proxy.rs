@@ -158,7 +158,7 @@ async fn proxy_api(state: ProxyState, request: Request) -> Response {
     let body = request.into_body();
 
     let config = state.config.read().await;
-    let server_url = config.effective_server_url().trim_end_matches('/').to_string();
+    let server_url = config.active_profile().effective_server_url().trim_end_matches('/').to_string();
     drop(config);
 
     let path_and_query = uri
@@ -366,12 +366,10 @@ body.kd-ready {{
 body.kd-ready .pf-v6-c-page {{
   height: calc(100vh - var(--kd-h)) !important;
   overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
 }}
 body.kd-ready .pf-v6-c-page__main {{
-  flex: 1 1 0% !important;
   overflow-y: auto !important;
+  min-height: 0 !important;
 }}
 
 /* hide brand/logo */
@@ -499,13 +497,22 @@ document.addEventListener('DOMContentLoaded', function() {{
       items: [
         {{ label: 'Overview', shortcut: 'Ctrl+H', nav: '/openshift/cost-management/' }},
         {{ label: 'OpenShift', shortcut: 'Ctrl+O', nav: '/openshift/cost-management/ocp' }},
-        {{ label: 'AWS', nav: '/openshift/cost-management/aws' }},
-        {{ label: 'Azure', nav: '/openshift/cost-management/azure' }},
-        {{ label: 'GCP', nav: '/openshift/cost-management/gcp' }},
+        {{ label: 'AWS', shortcut: 'Ctrl+W', nav: '/openshift/cost-management/aws' }},
+        {{ label: 'Azure', shortcut: 'Ctrl+U', nav: '/openshift/cost-management/azure' }},
+        {{ label: 'Google Cloud', shortcut: 'Ctrl+G', nav: '/openshift/cost-management/gcp' }},
         {{ label: 'Cost Explorer', shortcut: 'Ctrl+E', nav: '/openshift/cost-management/explorer' }},
         {{ label: 'Optimizations', nav: '/openshift/cost-management/optimizations' }},
         {{ sep: true }},
-        {{ label: 'CM Settings', shortcut: 'Ctrl+Shift+S', nav: '/openshift/cost-management/settings' }}
+        {{ label: 'Cost Settings', shortcut: 'Ctrl+S', nav: '/openshift/cost-management/settings' }}
+      ]
+    }},
+    iam: {{
+      label: 'Identity & Access',
+      items: [
+        {{ label: 'Overview', shortcut: 'Ctrl+Shift+W', nav: '/iam/user-access/overview' }},
+        {{ label: 'Users', shortcut: 'Ctrl+Shift+U', nav: '/iam/user-access/users' }},
+        {{ label: 'Groups', shortcut: 'Ctrl+Shift+G', nav: '/iam/user-access/groups' }},
+        {{ label: 'Roles', shortcut: 'Ctrl+Shift+R', nav: '/iam/user-access/roles' }}
       ]
     }},
     view: {{
@@ -664,6 +671,29 @@ document.addEventListener('DOMContentLoaded', function() {{
 
   document.addEventListener('click', closeAll);
 
+  /* inject "My User Access" into the PF user profile dropdown */
+  new MutationObserver(function() {{
+    var menus = document.querySelectorAll('.pf-v6-c-menu__list');
+    menus.forEach(function(list) {{
+      if (list.querySelector('.kd-mua-item')) return;
+      var logout = null;
+      list.querySelectorAll('.pf-v6-c-menu__item').forEach(function(item) {{
+        if (item.textContent.trim().toLowerCase() === 'logout') logout = item.closest('.pf-v6-c-menu__list-item');
+      }});
+      if (!logout) return;
+      var li = document.createElement('li');
+      li.className = 'pf-v6-c-menu__list-item kd-mua-item';
+      li.setAttribute('role', 'none');
+      var btn = document.createElement('button');
+      btn.className = 'pf-v6-c-menu__item';
+      btn.setAttribute('role', 'menuitem');
+      btn.innerHTML = '<span class="pf-v6-c-menu__item-main"><span class="pf-v6-c-menu__item-text">My User Access</span></span><span style="margin-left:auto;font-size:11px;color:var(--kd-bar-fg2,#6a6e73)">Ctrl+M</span>';
+      btn.addEventListener('click', function() {{ window.location.href='/iam/my-user-access'; }});
+      li.appendChild(btn);
+      logout.before(li);
+    }});
+  }}).observe(document.body, {{ childList: true, subtree: true }});
+
   /* keyboard shortcuts */
   document.addEventListener('keydown', function(e) {{
     var ctrl = e.ctrlKey || e.metaKey;
@@ -671,15 +701,24 @@ document.addEventListener('DOMContentLoaded', function() {{
       switch(e.key.toLowerCase()) {{
         case 'h': e.preventDefault(); window.location.href='/openshift/cost-management/'; break;
         case 'o': e.preventDefault(); window.location.href='/openshift/cost-management/ocp'; break;
+        case 'w': e.preventDefault(); window.location.href='/openshift/cost-management/aws'; break;
+        case 'u': e.preventDefault(); window.location.href='/openshift/cost-management/azure'; break;
+        case 'g': e.preventDefault(); window.location.href='/openshift/cost-management/gcp'; break;
         case 'e': e.preventDefault(); window.location.href='/openshift/cost-management/explorer'; break;
+        case 's': e.preventDefault(); window.location.href='/openshift/cost-management/settings'; break;
+        case 'm': e.preventDefault(); window.location.href='/iam/my-user-access'; break;
         case 't': e.preventDefault(); doAction('theme'); break;
         case 'p': e.preventDefault(); doAction('print'); break;
         case 'q': e.preventDefault(); doAction('quit'); break;
       }}
     }}
-    if (ctrl && e.shiftKey && e.key.toLowerCase() === 's') {{
-      e.preventDefault();
-      window.location.href='/openshift/cost-management/settings';
+    if (ctrl && e.shiftKey) {{
+      switch(e.key.toLowerCase()) {{
+        case 'w': e.preventDefault(); window.location.href='/iam/user-access/overview'; break;
+        case 'u': e.preventDefault(); window.location.href='/iam/user-access/users'; break;
+        case 'g': e.preventDefault(); window.location.href='/iam/user-access/groups'; break;
+        case 'r': e.preventDefault(); window.location.href='/iam/user-access/roles'; break;
+      }}
     }}
     if (e.key === 'Escape') closeAll();
   }});
