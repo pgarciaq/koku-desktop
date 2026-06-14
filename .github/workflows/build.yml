@@ -140,7 +140,18 @@ jobs:
         shell: bash
         run: bash scripts/stamp-version.sh
 
+      - name: Place UI assets for Tauri (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: cp -r ui src-tauri/ui
+
+      - name: Build Tauri app (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: npx tauri build --target ${{ matrix.rust-target }} --config '{"build":{"frontendDist":"./ui"}}'
+
       - name: Build Tauri app
+        if: runner.os != 'Windows'
         shell: bash
         run: npx tauri build --target ${{ matrix.rust-target }}
 
