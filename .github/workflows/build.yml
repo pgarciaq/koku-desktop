@@ -27,7 +27,10 @@ jobs:
           node-version: 22
 
       - name: Clone koku-ui
-        run: git clone --depth 1 https://github.com/project-koku/koku-ui.git /tmp/koku-ui
+        run: |
+          git clone --depth 1 https://github.com/project-koku/koku-ui.git /tmp/koku-ui
+          cd /tmp/koku-ui
+          git submodule update --init --depth 1
 
       - name: Build koku-ui on-prem
         run: |
@@ -37,11 +40,14 @@ jobs:
 
       - name: Copy dist into ui/
         run: |
-          mkdir -p ui/costManagement ui/costManagementRos ui/sources
+          mkdir -p ui/costManagement ui/costManagementRos ui/sources ui/rbac
           cp -r /tmp/koku-ui/apps/koku-ui-onprem/dist/. ui/
           cp -r /tmp/koku-ui/apps/koku-ui-hccm/dist/. ui/costManagement/
           cp -r /tmp/koku-ui/apps/koku-ui-ros/dist/. ui/costManagementRos/
           cp -r /tmp/koku-ui/apps/koku-ui-sources/dist/. ui/sources/
+          if [ -d /tmp/koku-ui/apps/rbac-ui-onprem/dist ]; then
+            cp -r /tmp/koku-ui/apps/rbac-ui-onprem/dist/. ui/rbac/
+          fi
 
       - name: Upload UI artifact
         uses: actions/upload-artifact@v4
