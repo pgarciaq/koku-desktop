@@ -4,10 +4,11 @@
 #   - VERSION file (base semver, e.g. "0.2.0")
 #   - ui/.build-info (koku-ui date + 10-char git hash)
 #
-# Result: 0.2.0.20260615.962d73fed3
+# Tauri requires strict semver, so the format uses pre-release syntax:
+#   0.2.0-20260602.6dc900b701
 #
-# This stamps tauri.conf.json and Cargo.toml so that deb/rpm packages
-# carry the full version, making every koku-ui rebuild upgradeable.
+# RPM/DEB package managers sort the date component chronologically,
+# making every koku-ui rebuild an upgradeable package.
 #
 set -euo pipefail
 
@@ -34,29 +35,30 @@ else
   UI_HASH=$(cd "$PROJECT_DIR" && git rev-parse HEAD 2>/dev/null | head -c 10 || echo "0000000000")
 fi
 
-FULL_VERSION="${BASE_VERSION}.${UI_DATE}.${UI_HASH}"
+FULL_VERSION="${BASE_VERSION}-${UI_DATE}.${UI_HASH}"
 
 echo "Version: $FULL_VERSION"
 echo "  base:      $BASE_VERSION"
 echo "  ui date:   $UI_DATE"
 echo "  ui commit: $UI_HASH"
 
-# Patch tauri.conf.json — replace the "version" field value
+# Patch tauri.conf.json using python for reliable cross-platform JSON editing.
+# Pass the file path and version as arguments to avoid shell path quoting issues.
 if [[ -f "$TAURI_CONF" ]]; then
-  # Use python for reliable JSON editing (available on all CI runners)
-  python3 -c "
+  python3 - "$TAURI_CONF" "$FULL_VERSION" <<'PYEOF'
 import json, sys
-with open('$TAURI_CONF', 'r') as f:
+conf_path, version = sys.argv[1], sys.argv[2]
+with open(conf_path, 'r') as f:
     conf = json.load(f)
-conf['version'] = '$FULL_VERSION'
-with open('$TAURI_CONF', 'w') as f:
+conf['version'] = version
+with open(conf_path, 'w') as f:
     json.dump(conf, f, indent=2)
     f.write('\n')
-"
+PYEOF
   echo "  patched: $TAURI_CONF"
 fi
 
-# Patch Cargo.toml — version field (Cargo accepts any string in quotes)
+# Patch Cargo.toml version field
 if [[ -f "$CARGO_TOML" ]]; then
   sed -i.bak "s/^version = \".*\"/version = \"$FULL_VERSION\"/" "$CARGO_TOML"
   rm -f "$CARGO_TOML.bak"
