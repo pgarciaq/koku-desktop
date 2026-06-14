@@ -68,7 +68,6 @@ jobs:
         include:
           - name: Linux x86_64
             os: ubuntu-22.04
-            targets: "deb rpm"
             rust-target: x86_64-unknown-linux-gnu
           - name: macOS x86_64
             os: macos-13
@@ -118,27 +117,42 @@ jobs:
           name: ui-assets
           path: ui/
 
+      - name: Verify UI assets
+        shell: bash
+        run: |
+          echo "Contents of ui/:"
+          ls -la ui/ || dir ui\\
+          echo "---"
+          echo "Contents of ui/costManagement/:"
+          ls ui/costManagement/ 2>/dev/null || dir ui\\costManagement 2>nul || echo "(not found)"
+
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tauriScript: npx tauri
-          args: >-
-            --target ${{ matrix.rust-target }}
-            ${{ matrix.targets && format('--bundles {0}', matrix.targets) || '' }}
-          tagName: v__VERSION__
-          releaseName: "Cost Management Desktop v__VERSION__"
-          releaseBody: "See the assets below to download and install."
-          releaseDraft: true
-          prerelease: false
+        shell: bash
+        run: npx tauri build --target ${{ matrix.rust-target }}
 
       - name: Upload build artifacts
-        if: github.event_name == 'pull_request' || github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.name }}
           path: |
             src-tauri/target/${{ matrix.rust-target }}/release/bundle/**/*
+            src-tauri/target/${{ matrix.rust-target }}/release/koku-desktop
+            src-tauri/target/${{ matrix.rust-target }}/release/koku-desktop.exe
           if-no-files-found: warn
           retention-days: 7
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: artifacts/**/*
