@@ -80,8 +80,6 @@ impl ProxyServer {
 }
 
 fn build_router(state: ProxyState) -> Router {
-    let settings_dir = state.base_path.join("settings");
-    let about_dir = state.base_path.join("about");
     let splash_dir = state.base_path.join("splash");
 
     Router::new()
@@ -91,8 +89,10 @@ fn build_router(state: ProxyState) -> Router {
             get(ros_plugin_manifest),
         )
         .route("/sources/plugin-manifest.json", get(sources_plugin_manifest))
-        .nest_service("/_settings", ServeDir::new(settings_dir))
-        .nest_service("/_about", ServeDir::new(about_dir))
+        .route("/_settings/{*rest}", get(serve_custom_page))
+        .route("/_settings/", get(serve_custom_page))
+        .route("/_about/{*rest}", get(serve_custom_page))
+        .route("/_about/", get(serve_custom_page))
         .nest_service("/_splash", ServeDir::new(splash_dir))
         .fallback(any(fallback_handler))
         .layer(CorsLayer::permissive())
@@ -121,6 +121,28 @@ async fn sources_plugin_manifest(State(state): State<ProxyState>) -> Response {
     serve_ui_file(&state, "sources/plugin-manifest.json").await
 }
 
+async fn serve_custom_page(State(state): State<ProxyState>, request: Request) -> Response {
+    let path = request.uri().path();
+    let dir_name = path
+        .strip_prefix("/_")
+        .and_then(|p| p.split('/').next())
+        .unwrap_or("settings");
+    let relative = path
+        .strip_prefix(&format!("/_{dir_name}"))
+        .unwrap_or("/")
+        .trim_start_matches('/');
+    let page_dir = state.base_path.join(dir_name);
+    let file_path = if relative.is_empty() {
+        page_dir.join("index.html")
+    } else {
+        page_dir.join(relative)
+    };
+    if file_path.is_file() {
+        return serve_path(&state, &file_path, true).await;
+    }
+    StatusCode::NOT_FOUND.into_response()
+}
+
 async fn fallback_handler(State(state): State<ProxyState>, request: Request) -> Response {
     let path = request.uri().path().to_string();
     if path.starts_with("/api/") {
@@ -136,7 +158,7 @@ async fn proxy_api(state: ProxyState, request: Request) -> Response {
     let body = request.into_body();
 
     let config = state.config.read().await;
-    let server_url = config.server_url.trim_end_matches('/').to_string();
+    let server_url = config.effective_server_url().trim_end_matches('/').to_string();
     drop(config);
 
     let path_and_query = uri
@@ -343,10 +365,13 @@ body.kd-ready {{
 }}
 body.kd-ready .pf-v6-c-page {{
   height: calc(100vh - var(--kd-h)) !important;
-  overflow-y: auto !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }}
-body.kd-ready .pf-v6-c-page__main-section:first-of-type {{
-  padding-top: 16px !important;
+body.kd-ready .pf-v6-c-page__main {{
+  flex: 1 1 0% !important;
+  overflow-y: auto !important;
 }}
 
 /* hide brand/logo */
@@ -658,6 +683,32 @@ document.addEventListener('DOMContentLoaded', function() {{
     }}
     if (e.key === 'Escape') closeAll();
   }});
+
+  /* intercept blob downloads (js-file-download creates <a download> with blob: URLs)
+     WebKitGTK does not trigger Tauri's on_download for JS-initiated blob downloads */
+  document.addEventListener('click', function(e) {{
+    var a = e.target.closest ? e.target.closest('a[download]') : null;
+    if (!a) return;
+    var href = a.href || '';
+    if (!href.startsWith('blob:')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var filename = a.getAttribute('download') || 'download.csv';
+    fetch(href).then(function(r) {{ return r.blob(); }}).then(function(blob) {{
+      var reader = new FileReader();
+      reader.onload = function() {{
+        var base64 = reader.result.split(',')[1] || '';
+        if (invoke) {{
+          invoke('save_blob_download', {{ filename: filename, dataBase64: base64 }}).then(function(path) {{
+            if (path) console.log('Saved to', path);
+          }}).catch(function(err) {{
+            console.error('Save failed:', err);
+          }});
+        }}
+      }};
+      reader.readAsDataURL(blob);
+    }});
+  }}, true);
 }});
 </script>
 "##

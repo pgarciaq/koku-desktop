@@ -1,9 +1,10 @@
 use super::{AuthProvider, UserInfo};
-use crate::config::OidcConfig;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::Deserialize;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+const RHSM_CLIENT_ID: &str = "rhsm-api";
 
 #[derive(Deserialize)]
 struct TokenResponse {
@@ -17,39 +18,33 @@ struct CachedToken {
     expires_at: Instant,
 }
 
-pub struct OidcAuthProvider {
-    token_url: String,
-    client_id: String,
-    client_secret: String,
-    username: String,
-    password: String,
+pub struct OfflineTokenAuthProvider {
+    token_endpoint: String,
+    offline_token: String,
+    is_saas: bool,
     cached: Mutex<Option<CachedToken>>,
 }
 
-impl OidcAuthProvider {
-    pub fn new(config: &OidcConfig) -> anyhow::Result<Self> {
-        Ok(Self {
-            token_url: config.token_url(),
-            client_id: config.client_id.clone(),
-            client_secret: config.client_secret.clone(),
-            username: config.username.clone(),
-            password: config.password.clone(),
+impl OfflineTokenAuthProvider {
+    pub fn new(token_endpoint: String, offline_token: String, is_saas: bool) -> Self {
+        Self {
+            token_endpoint,
+            offline_token,
+            is_saas,
             cached: Mutex::new(None),
-        })
+        }
     }
 
     fn refresh_token(&self) -> Option<String> {
-        let url = self.token_url.clone();
-        let params = [
-            ("grant_type", "password"),
-            ("client_id", &self.client_id),
-            ("client_secret", &self.client_secret),
-            ("username", &self.username),
-            ("password", &self.password),
-        ]
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.to_string()))
-        .collect::<Vec<_>>();
+        let url = self.token_endpoint.clone();
+        let mut params: Vec<(String, String)> = vec![
+            ("grant_type".into(), "refresh_token".into()),
+            ("client_id".into(), RHSM_CLIENT_ID.into()),
+            ("refresh_token".into(), self.offline_token.clone()),
+        ];
+        if self.is_saas {
+            params.push(("scope".into(), "api.console".into()));
+        }
 
         let result = std::thread::spawn(move || -> Option<(String, u64)> {
             let client = reqwest::blocking::Client::builder()
@@ -58,15 +53,11 @@ impl OidcAuthProvider {
                 .build()
                 .ok()?;
 
-            let resp = client
-                .post(&url)
-                .form(&params)
-                .send()
-                .ok()?;
+            let resp = client.post(&url).form(&params).send().ok()?;
 
             if !resp.status().is_success() {
                 log::error!(
-                    "Keycloak token request failed: {} {}",
+                    "Offline token refresh failed: {} {}",
                     resp.status(),
                     resp.text().unwrap_or_default()
                 );
@@ -89,10 +80,13 @@ impl OidcAuthProvider {
                     expires_at,
                 });
             }
-            log::info!("Keycloak token acquired (expires in {expires_in}s)");
+            log::info!("Offline token refreshed (expires in {expires_in}s)");
             Some(token)
         } else {
-            log::error!("Failed to acquire Keycloak token from {}", self.token_url);
+            log::error!(
+                "Failed to refresh offline token via {}",
+                self.token_endpoint
+            );
             None
         }
     }
@@ -128,7 +122,7 @@ impl OidcAuthProvider {
     }
 }
 
-impl AuthProvider for OidcAuthProvider {
+impl AuthProvider for OfflineTokenAuthProvider {
     fn request_headers(&self) -> HeaderMap {
         let mut headers = HeaderMap::new();
         if let Some(token) = self.get_valid_token() {
@@ -146,8 +140,9 @@ impl AuthProvider for OidcAuthProvider {
                     return UserInfo {
                         username: payload
                             .get("preferred_username")
+                            .or_else(|| payload.get("username"))
                             .and_then(|v| v.as_str())
-                            .unwrap_or("oidc-user")
+                            .unwrap_or("user")
                             .to_string(),
                         email: payload
                             .get("email")
@@ -159,7 +154,7 @@ impl AuthProvider for OidcAuthProvider {
             }
         }
         UserInfo {
-            username: self.username.clone(),
+            username: "user".into(),
             email: String::new(),
         }
     }

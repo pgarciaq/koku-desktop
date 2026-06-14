@@ -4,7 +4,7 @@ mod auth;
 mod config;
 mod proxy;
 
-use auth::{AuthProvider, DevAuthProvider, OidcAuthProvider};
+use auth::{AuthProvider, DevAuthProvider, OfflineTokenAuthProvider, ServiceAccountAuthProvider};
 use config::{AppConfig, AuthMode, Theme};
 use proxy::ProxyServer;
 use std::path::PathBuf;
@@ -34,7 +34,18 @@ fn create_auth_provider(config: &AppConfig) -> anyhow::Result<Arc<dyn AuthProvid
         AuthMode::Dev => Ok(Arc::new(DevAuthProvider::new(
             config.dev_identity.clone(),
         )?)),
-        AuthMode::Oidc => Ok(Arc::new(OidcAuthProvider::new(&config.oidc)?)),
+        AuthMode::ServiceAccount => Ok(Arc::new(ServiceAccountAuthProvider::new(
+            config.effective_token_endpoint().to_string(),
+            config.service_account.client_id.clone(),
+            config.service_account.client_secret.clone(),
+            config.service_account.display_name.clone(),
+            config.is_saas(),
+        ))),
+        AuthMode::OfflineToken => Ok(Arc::new(OfflineTokenAuthProvider::new(
+            config.effective_token_endpoint().to_string(),
+            config.offline_token.clone(),
+            config.is_saas(),
+        ))),
     }
 }
 
@@ -194,6 +205,43 @@ fn quit_app(app: AppHandle) {
 }
 
 #[tauri::command]
+async fn save_blob_download(
+    app: AppHandle,
+    data_base64: String,
+    filename: String,
+) -> Result<String, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let bytes = base64::Engine::decode(
+        &base64::engine::general_purpose::STANDARD,
+        &data_base64,
+    )
+    .map_err(|e| format!("base64 decode error: {e}"))?;
+
+    let download_dir = dirs::download_dir().unwrap_or_else(|| {
+        dirs::home_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("Downloads")
+    });
+
+    let dest = app
+        .dialog()
+        .file()
+        .set_file_name(&filename)
+        .set_directory(&download_dir)
+        .blocking_save_file();
+
+    let target: PathBuf = match dest {
+        Some(path) => path.as_path().map(|p| p.to_path_buf()).ok_or("invalid path")?,
+        None => return Ok(String::new()),
+    };
+
+    std::fs::write(&target, &bytes).map_err(|e| format!("write error: {e}"))?;
+    log::info!("Blob download saved: {}", target.display());
+    Ok(target.display().to_string())
+}
+
+#[tauri::command]
 fn get_about_info() -> Result<serde_json::Value, String> {
     let os = os_info::get();
     Ok(serde_json::json!({
@@ -211,7 +259,7 @@ fn get_about_info() -> Result<serde_json::Value, String> {
 async fn get_server_status(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let (server_url, auth) = {
         let config = state.config.read().await;
-        let server_url = config.server_url.trim_end_matches('/').to_string();
+        let server_url = config.effective_server_url().trim_end_matches('/').to_string();
         let auth = state.auth.read().await.clone();
         (server_url, auth)
     };
@@ -454,6 +502,7 @@ fn main() {
             get_about_info,
             get_server_status,
             quit_app,
+            save_blob_download,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Tauri application")

@@ -3,28 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings — Cost Management Desktop</title>
+  <title>Settings — Red Hat Lightspeed Cost Management Desktop</title>
   <style>
     @font-face {
       font-family: "Red Hat Display";
       src: url("../fonts/RedHatDisplayVF.woff2") format("woff2");
-      font-weight: 300 900;
-      font-style: normal;
-      font-display: swap;
+      font-weight: 300 900; font-style: normal; font-display: swap;
     }
     @font-face {
       font-family: "Red Hat Text";
       src: url("../fonts/RedHatTextVF.woff2") format("woff2");
-      font-weight: 300 800;
-      font-style: normal;
-      font-display: swap;
+      font-weight: 300 800; font-style: normal; font-display: swap;
     }
     @font-face {
       font-family: "Red Hat Mono";
       src: url("../fonts/RedHatMonoVF.woff2") format("woff2");
-      font-weight: 300 700;
-      font-style: normal;
-      font-display: swap;
+      font-weight: 300 700; font-style: normal; font-display: swap;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -46,7 +40,6 @@
       --color-error-bg: #fef2f0;
       --color-focus: #0066cc;
       --shadow-sm: 0 1px 2px rgba(21, 21, 21, 0.08);
-      --shadow-md: 0 4px 12px rgba(21, 21, 21, 0.1);
       --radius: 8px;
     }
 
@@ -64,337 +57,138 @@
       --color-error: #fe5142;
       --color-error-bg: #3d1511;
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
-    html {
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
-    }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
     body {
-      margin: 0;
-      min-height: 100vh;
+      margin: 0; min-height: 100vh;
       font-family: "Red Hat Text", system-ui, sans-serif;
-      font-size: 0.875rem;
-      line-height: 1.5;
-      color: var(--color-text);
-      background: var(--color-bg);
+      font-size: 0.875rem; line-height: 1.5;
+      color: var(--color-text); background: var(--color-bg);
     }
 
-    .page {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem 3rem;
-    }
+    .page { max-width: 640px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
 
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 2rem;
-    }
-
-    .header__icon {
-      flex-shrink: 0;
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-
+    .header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+    .header__icon { flex-shrink: 0; width: 2.5rem; height: 2.5rem; }
     .header__title {
-      margin: 0;
-      font-family: "Red Hat Display", system-ui, sans-serif;
-      font-size: 1.5rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      margin: 0; font-family: "Red Hat Display", system-ui, sans-serif;
+      font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em;
     }
 
     .card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-      padding: 1.5rem;
-      margin-bottom: 1rem;
+      background: var(--color-surface); border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius); box-shadow: var(--shadow-sm);
+      padding: 1.5rem; margin-bottom: 1rem;
     }
 
     .section-title {
-      margin: 0 0 1rem;
-      font-family: "Red Hat Display", system-ui, sans-serif;
-      font-size: 1.125rem;
-      font-weight: 600;
+      margin: 0 0 1rem; font-family: "Red Hat Display", system-ui, sans-serif;
+      font-size: 1.125rem; font-weight: 600;
     }
 
-    .field {
-      margin-bottom: 1rem;
-    }
-
+    .field { margin-bottom: 1rem; }
     .field:last-child { margin-bottom: 0; }
 
-    .field-row {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
+    .field-row { display: flex; gap: 0.75rem; align-items: flex-end; }
     .field-row .field { flex: 1; margin-bottom: 0; }
 
-    label, .label {
-      display: block;
-      margin-bottom: 0.375rem;
-      font-weight: 500;
-      color: var(--color-text);
-    }
+    label, .label { display: block; margin-bottom: 0.375rem; font-weight: 500; color: var(--color-text); }
 
-    .hint {
-      margin-top: 0.25rem;
-      font-size: 0.8125rem;
-      color: var(--color-text-secondary);
-    }
+    .hint { margin-top: 0.25rem; font-size: 0.8125rem; color: var(--color-text-secondary); }
 
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      font-family: "Red Hat Text", system-ui, sans-serif;
-      font-size: 0.875rem;
-      color: var(--color-text);
-      background: var(--color-input-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
+    input[type="text"], input[type="password"], select, textarea {
+      width: 100%; padding: 0.5rem 0.75rem;
+      font-family: "Red Hat Text", system-ui, sans-serif; font-size: 0.875rem;
+      color: var(--color-text); background: var(--color-input-bg);
+      border: 1px solid var(--color-border); border-radius: 4px;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--color-focus);
+      outline: none; border-color: var(--color-focus);
       box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.25);
     }
 
     textarea {
-      font-family: "Red Hat Mono", monospace;
-      font-size: 0.8125rem;
-      line-height: 1.6;
-      resize: vertical;
-      min-height: 10rem;
+      font-family: "Red Hat Mono", monospace; font-size: 0.8125rem;
+      line-height: 1.6; resize: vertical; min-height: 10rem;
     }
 
-    .radio-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.625rem;
-    }
+    .radio-group { display: flex; flex-direction: column; gap: 0.625rem; }
 
-    .radio-option {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-    }
-
+    .radio-option { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
     .radio-option input[type="radio"] {
-      width: 1rem;
-      height: 1rem;
-      margin: 0;
-      accent-color: var(--color-red);
-      cursor: pointer;
+      width: 1rem; height: 1rem; margin: 0.125rem 0 0 0;
+      accent-color: var(--color-red); cursor: pointer; flex-shrink: 0;
     }
 
-    .radio-option--disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
+    .radio-content { display: flex; flex-direction: column; gap: 0.375rem; flex: 1; }
 
-    .radio-option--disabled input { cursor: not-allowed; }
-
-    .badge-soon {
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--color-text-secondary);
-    }
-
-    .checkbox-option {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.625rem;
-      cursor: pointer;
-    }
-
+    .checkbox-option { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem; cursor: pointer; }
     .checkbox-option:last-child { margin-bottom: 0; }
-
     .checkbox-option input[type="checkbox"] {
-      width: 1rem;
-      height: 1rem;
-      margin: 0;
-      accent-color: var(--color-red);
-      cursor: pointer;
+      width: 1rem; height: 1rem; margin: 0;
+      accent-color: var(--color-red); cursor: pointer;
     }
 
-    .auth-panel { margin-top: 1rem; }
-
-    .auth-panel[hidden] { display: none; }
-
-    .input-with-icon {
-      position: relative;
-    }
-
-    .input-with-icon input { padding-right: 2.25rem; }
-
-    .input-icon {
-      position: absolute;
-      right: 0.625rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 1rem;
-      height: 1rem;
-      color: var(--color-text-secondary);
-      pointer-events: none;
-    }
+    .indent { margin-left: 1.5rem; margin-top: 0.5rem; }
 
     details.advanced {
-      margin-top: 1rem;
-      border: 1px solid var(--color-border-subtle);
-      border-radius: 4px;
-      overflow: hidden;
+      margin-top: 1rem; border: 1px solid var(--color-border-subtle);
+      border-radius: 4px; overflow: hidden;
     }
-
     details.advanced summary {
-      padding: 0.625rem 0.75rem;
-      font-weight: 500;
-      cursor: pointer;
-      background: var(--color-surface-elevated);
-      list-style: none;
+      padding: 0.625rem 0.75rem; font-weight: 500; cursor: pointer;
+      background: var(--color-surface-elevated); list-style: none;
     }
-
     details.advanced summary::-webkit-details-marker { display: none; }
-
     details.advanced summary::before {
-      content: "▸";
-      display: inline-block;
-      margin-right: 0.5rem;
+      content: "\25B8"; display: inline-block; margin-right: 0.5rem;
       transition: transform 0.15s;
     }
-
     details.advanced[open] summary::before { transform: rotate(90deg); }
-
     details.advanced .advanced-body { padding: 0.75rem; }
 
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      font-family: "Red Hat Text", system-ui, sans-serif;
-      font-size: 0.875rem;
-      font-weight: 500;
-      line-height: 1.4;
-      border-radius: 4px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.5rem 1rem; font-family: "Red Hat Text", system-ui, sans-serif;
+      font-size: 0.875rem; font-weight: 500; line-height: 1.4;
+      border-radius: 4px; border: 1px solid transparent; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s; white-space: nowrap;
     }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+    .btn-primary { background: var(--color-red); color: #ffffff; border-color: var(--color-red); }
+    .btn-primary:hover:not(:disabled) { background: var(--color-red-hover); border-color: var(--color-red-hover); }
 
-    .btn-primary {
-      background: var(--color-red);
-      color: #ffffff;
-      border-color: var(--color-red);
-    }
+    .btn-secondary { background: transparent; color: var(--color-text); border-color: var(--color-border); }
+    .btn-secondary:hover:not(:disabled) { background: var(--color-surface-elevated); }
 
-    .btn-primary:hover:not(:disabled) {
-      background: var(--color-red-hover);
-      border-color: var(--color-red-hover);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--color-text);
-      border-color: var(--color-border);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background: var(--color-surface-elevated);
-    }
-
-    .btn-outline {
-      background: transparent;
-      color: var(--color-text);
-      border-color: var(--color-border);
-    }
-
-    .btn-outline:hover:not(:disabled) {
-      border-color: var(--color-text-secondary);
-    }
+    .btn-outline { background: transparent; color: var(--color-text); border-color: var(--color-border); }
+    .btn-outline:hover:not(:disabled) { border-color: var(--color-text-secondary); }
 
     .test-result {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-      padding: 0.625rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.8125rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-top: 0.75rem; padding: 0.625rem 0.75rem; border-radius: 4px; font-size: 0.8125rem;
     }
-
     .test-result[hidden] { display: none; }
-
-    .test-result--success {
-      background: var(--color-success-bg);
-      color: var(--color-success);
-    }
-
-    .test-result--error {
-      background: var(--color-error-bg);
-      color: var(--color-error);
-    }
-
-    .test-result__icon {
-      flex-shrink: 0;
-      width: 1rem;
-      height: 1rem;
-    }
+    .test-result--success { background: var(--color-success-bg); color: var(--color-success); }
+    .test-result--error { background: var(--color-error-bg); color: var(--color-error); }
+    .test-result__icon { flex-shrink: 0; width: 1rem; height: 1rem; }
 
     .spinner {
-      width: 1rem;
-      height: 1rem;
-      border: 2px solid var(--color-border);
-      border-top-color: var(--color-red);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      width: 1rem; height: 1rem;
+      border: 2px solid var(--color-border); border-top-color: var(--color-red);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .footer {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
-      padding-top: 0.5rem;
-    }
-
+    .footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; padding-top: 0.5rem; }
     .footer .btn-primary { flex: 1; }
 
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -405,89 +199,94 @@
         <ellipse fill="#151515" cx="16" cy="14" rx="10" ry="3.5"/>
         <path fill="#EE0000" d="M6 28c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-1H6v1z"/>
       </svg>
-      <h1 class="header__title">Cost Management Desktop</h1>
+      <h1 class="header__title">Settings</h1>
     </header>
 
     <form id="settings-form" novalidate>
+      <!-- Connection -->
       <section class="card" aria-labelledby="connection-heading">
         <h2 class="section-title" id="connection-heading">Connection</h2>
-        <div class="field-row">
-          <div class="field">
-            <label for="server-url">Server URL</label>
-            <input type="text" id="server-url" name="server_url" placeholder="http://192.168.1.50:8000" autocomplete="url" spellcheck="false">
-          </div>
-          <button type="button" class="btn btn-outline" id="test-connection-btn">Test Connection</button>
-        </div>
-        <div id="test-result" class="test-result" hidden role="status" aria-live="polite"></div>
-      </section>
-
-      <section class="card" aria-labelledby="auth-heading">
-        <h2 class="section-title" id="auth-heading">Authentication</h2>
-        <fieldset class="radio-group" role="radiogroup" aria-label="Authentication mode">
+        <fieldset class="radio-group" role="radiogroup" aria-label="Connection mode">
           <label class="radio-option">
-            <input type="radio" name="auth_mode" value="dev" id="auth-dev" checked>
-            <span>Development (no Keycloak)</span>
+            <input type="radio" name="connection_mode" value="saas" id="conn-saas">
+            <span class="radio-content">
+              <span>Red Hat Hybrid Cloud Console (SaaS)</span>
+              <span class="hint">Connects to console.redhat.com</span>
+            </span>
           </label>
           <label class="radio-option">
-            <input type="radio" name="auth_mode" value="oidc" id="auth-oidc">
-            <span>Keycloak OIDC</span>
+            <input type="radio" name="connection_mode" value="private" id="conn-private" checked>
+            <span class="radio-content">
+              <span>Private Cost Management instance</span>
+            </span>
           </label>
         </fieldset>
 
-        <div class="auth-panel" id="dev-panel">
-          <div class="field">
-            <label for="dev-username">Username</label>
-            <input type="text" id="dev-username" autocomplete="username" value="admin">
-          </div>
-          <div class="field">
-            <label for="dev-email">Email</label>
-            <input type="email" id="dev-email" autocomplete="email" value="admin@example.com">
-          </div>
-          <div class="field">
-            <label for="dev-org-id">Org ID</label>
-            <input type="text" id="dev-org-id" value="1234567" spellcheck="false">
-          </div>
-          <div class="field">
-            <label for="dev-account">Account Number</label>
-            <input type="text" id="dev-account" value="10001" spellcheck="false">
-          </div>
-          <details class="advanced">
-            <summary>Advanced: Raw Identity JSON</summary>
-            <div class="advanced-body">
-              <label for="dev-identity-json" class="visually-hidden">Development identity JSON</label>
-              <textarea id="dev-identity-json" spellcheck="false"></textarea>
+        <div id="private-url-panel" class="indent">
+          <div class="field-row">
+            <div class="field">
+              <label for="server-url">Server URL</label>
+              <input type="text" id="server-url" placeholder="https://cost-management.apps.example.com" autocomplete="url" spellcheck="false">
             </div>
-          </details>
+            <button type="button" class="btn btn-outline" id="test-connection-btn">Test Connection</button>
+          </div>
+          <div id="test-result" class="test-result" hidden role="status" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Authentication -->
+      <section class="card" aria-labelledby="auth-heading">
+        <h2 class="section-title" id="auth-heading">Authentication</h2>
+        <fieldset class="radio-group" role="radiogroup" aria-label="Authentication method">
+          <label class="radio-option">
+            <input type="radio" name="auth_method" value="offline_token" id="auth-offline-token">
+            <span class="radio-content">
+              <span>Offline Token (Recommended)</span>
+              <span class="hint">Uses your personal Red Hat account. Your username is shown in the profile. Generate a token at <a href="https://access.redhat.com/management/api" target="_blank" rel="noopener">access.redhat.com/management/api</a>.</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="auth_method" value="service_account" id="auth-service-account" checked>
+            <span class="radio-content">
+              <span>Service Account</span>
+              <span class="hint">Uses a Client ID and Client Secret. For automation or when offline tokens are not available.</span>
+            </span>
+          </label>
+        </fieldset>
+
+        <!-- Offline Token fields -->
+        <div id="offline-token-panel" class="indent" hidden>
+          <div class="field">
+            <label for="offline-token">Offline Token</label>
+            <input type="password" id="offline-token" placeholder="Paste your offline token here" autocomplete="off" spellcheck="false">
+            <p class="hint">A long-lived token tied to your Red Hat account. Generate one at <a href="https://access.redhat.com/management/api" target="_blank" rel="noopener">access.redhat.com/management/api</a> → "Generate Token".</p>
+          </div>
         </div>
 
-        <div class="auth-panel" id="oidc-panel" hidden>
+        <!-- Service Account fields -->
+        <div id="service-account-panel" class="indent">
           <div class="field">
-            <label for="oidc-keycloak-url">Keycloak URL</label>
-            <input type="text" id="oidc-keycloak-url" placeholder="https://keycloak.example.com" spellcheck="false" autocomplete="url">
+            <label for="display-name">Display Name</label>
+            <input type="text" id="display-name" placeholder="e.g. John Doe" autocomplete="name" spellcheck="false">
+            <p class="hint">Shown in the profile area. If empty, the service account identity from the token is used.</p>
           </div>
           <div class="field">
-            <label for="oidc-realm">Realm</label>
-            <input type="text" id="oidc-realm" value="kubernetes" spellcheck="false">
+            <label for="client-id">Client ID</label>
+            <input type="text" id="client-id" autocomplete="off" spellcheck="false">
           </div>
           <div class="field">
-            <label for="oidc-client-id">Client ID</label>
-            <input type="text" id="oidc-client-id" value="cost-management-ui" spellcheck="false">
+            <label for="client-secret">Client Secret</label>
+            <input type="password" id="client-secret" autocomplete="off" spellcheck="false">
           </div>
-          <div class="field">
-            <label for="oidc-client-secret">Client Secret</label>
-            <input type="password" id="oidc-client-secret" autocomplete="off" spellcheck="false">
-          </div>
-          <div class="field">
-            <label for="oidc-username">Username</label>
-            <input type="text" id="oidc-username" autocomplete="username" spellcheck="false">
-          </div>
-          <div class="field">
-            <label for="oidc-password">Password</label>
-            <input type="password" id="oidc-password" autocomplete="current-password">
+          <div class="field" id="token-endpoint-field">
+            <label for="token-endpoint">Token Endpoint URL</label>
+            <input type="text" id="token-endpoint" placeholder="https://keycloak.example.com/realms/my-realm/protocol/openid-connect/token" autocomplete="url" spellcheck="false">
+            <p class="hint">The OpenID Connect token endpoint of your identity provider. For Keycloak, it looks like <code>https://&lt;host&gt;/realms/&lt;realm&gt;/protocol/openid-connect/token</code></p>
           </div>
         </div>
       </section>
 
+      <!-- Modules -->
       <section class="card" aria-labelledby="modules-heading">
         <h2 class="section-title" id="modules-heading">Modules</h2>
         <label class="checkbox-option">
@@ -500,11 +299,12 @@
         </label>
       </section>
 
+      <!-- Appearance -->
       <section class="card" aria-labelledby="appearance-heading">
         <h2 class="section-title" id="appearance-heading">Appearance</h2>
         <div class="field">
           <label for="theme-select">Theme</label>
-          <select id="theme-select" name="theme">
+          <select id="theme-select">
             <option value="system" selected>System</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
@@ -512,62 +312,109 @@
         </div>
       </section>
 
+      <!-- Developer mode -->
+      <details class="advanced" id="dev-section">
+        <summary>Developer mode</summary>
+        <div class="advanced-body">
+          <label class="checkbox-option" style="margin-bottom: 1rem;">
+            <input type="checkbox" id="dev-mode-toggle">
+            <span>Enable development mode (no authentication)</span>
+          </label>
+          <p class="hint" style="margin-top: -0.5rem; margin-bottom: 1rem;">
+            Uses a hardcoded <code>X-Rh-Identity</code> header. Only works when the Koku backend runs with <code>DEVELOPMENT=True</code>.
+          </p>
+          <div id="dev-fields" hidden>
+            <div class="field-row" style="margin-bottom: 1rem;">
+              <div class="field">
+                <label for="dev-username">Username</label>
+                <input type="text" id="dev-username" value="admin">
+              </div>
+              <div class="field">
+                <label for="dev-email">Email</label>
+                <input type="text" id="dev-email" value="admin@example.com">
+              </div>
+            </div>
+            <div class="field-row" style="margin-bottom: 1rem;">
+              <div class="field">
+                <label for="dev-org-id">Org ID</label>
+                <input type="text" id="dev-org-id" value="1234567" spellcheck="false">
+              </div>
+              <div class="field">
+                <label for="dev-account">Account Number</label>
+                <input type="text" id="dev-account" value="10001" spellcheck="false">
+              </div>
+            </div>
+            <details class="advanced">
+              <summary>Raw Identity JSON</summary>
+              <div class="advanced-body">
+                <textarea id="dev-identity-json" spellcheck="false"></textarea>
+              </div>
+            </details>
+          </div>
+        </div>
+      </details>
+
       <footer class="footer">
         <button type="submit" class="btn btn-primary" id="save-btn">Save &amp; Connect</button>
-        <a href="/openshift/cost-management/" class="btn btn-secondary" id="back-btn">Back to Cost Management</a>
+        <button type="button" class="btn btn-secondary" id="cancel-btn" hidden>Cancel</button>
       </footer>
     </form>
   </div>
 
   <script>
     (function () {
-      const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
+      var T = window.__TAURI__;
+      var invoke = T ? T.core.invoke : null;
+      if (!invoke) {
+        invoke = function(cmd, args) {
+          return Promise.reject("Tauri not available");
+        };
+      }
 
-      const DEFAULT_IDENTITY = {
+      var DEFAULT_IDENTITY = {
         identity: {
           account_number: "10001",
           org_id: "1234567",
           type: "User",
-          user: {
-            username: "admin",
-            email: "admin@example.com",
-            is_org_admin: true
-          }
+          user: { username: "admin", email: "admin@example.com", is_org_admin: true }
         },
-        entitlements: {
-          cost_management: { is_entitled: true }
-        }
+        entitlements: { cost_management: { is_entitled: true } }
       };
 
-      const els = {
+      var els = {
         form: document.getElementById("settings-form"),
+        connSaas: document.getElementById("conn-saas"),
+        connPrivate: document.getElementById("conn-private"),
+        privateUrlPanel: document.getElementById("private-url-panel"),
         serverUrl: document.getElementById("server-url"),
         testBtn: document.getElementById("test-connection-btn"),
         testResult: document.getElementById("test-result"),
-        authDev: document.getElementById("auth-dev"),
-        authOidc: document.getElementById("auth-oidc"),
-        devPanel: document.getElementById("dev-panel"),
-        oidcPanel: document.getElementById("oidc-panel"),
+        authOfflineToken: document.getElementById("auth-offline-token"),
+        authServiceAccount: document.getElementById("auth-service-account"),
+        offlineTokenPanel: document.getElementById("offline-token-panel"),
+        serviceAccountPanel: document.getElementById("service-account-panel"),
+        offlineToken: document.getElementById("offline-token"),
+        displayName: document.getElementById("display-name"),
+        clientId: document.getElementById("client-id"),
+        clientSecret: document.getElementById("client-secret"),
+        tokenEndpoint: document.getElementById("token-endpoint"),
+        tokenEndpointField: document.getElementById("token-endpoint-field"),
+        moduleRos: document.getElementById("module-ros"),
+        moduleSources: document.getElementById("module-sources"),
+        themeSelect: document.getElementById("theme-select"),
+        devSection: document.getElementById("dev-section"),
+        devModeToggle: document.getElementById("dev-mode-toggle"),
+        devFields: document.getElementById("dev-fields"),
         devUsername: document.getElementById("dev-username"),
         devEmail: document.getElementById("dev-email"),
         devOrgId: document.getElementById("dev-org-id"),
         devAccount: document.getElementById("dev-account"),
         devIdentityJson: document.getElementById("dev-identity-json"),
-        oidcKeycloakUrl: document.getElementById("oidc-keycloak-url"),
-        oidcRealm: document.getElementById("oidc-realm"),
-        oidcClientId: document.getElementById("oidc-client-id"),
-        oidcClientSecret: document.getElementById("oidc-client-secret"),
-        oidcUsername: document.getElementById("oidc-username"),
-        oidcPassword: document.getElementById("oidc-password"),
-        moduleRos: document.getElementById("module-ros"),
-        moduleSources: document.getElementById("module-sources"),
-        themeSelect: document.getElementById("theme-select"),
         saveBtn: document.getElementById("save-btn"),
         cancelBtn: document.getElementById("cancel-btn")
       };
 
-      let hasExistingConfig = false;
-      let identityFromJson = false;
+      var hasExistingConfig = false;
 
       function resolveTheme(theme) {
         if (theme === "system") {
@@ -578,6 +425,20 @@
 
       function applyTheme(theme) {
         document.documentElement.setAttribute("data-theme", resolveTheme(theme));
+      }
+
+      function updatePanels() {
+        var isSaas = els.connSaas.checked;
+        var isOfflineToken = els.authOfflineToken.checked;
+        var devMode = els.devModeToggle.checked;
+
+        els.privateUrlPanel.hidden = isSaas;
+        els.tokenEndpointField.hidden = isSaas;
+
+        els.offlineTokenPanel.hidden = !isOfflineToken || devMode;
+        els.serviceAccountPanel.hidden = isOfflineToken || devMode;
+
+        els.devFields.hidden = !devMode;
       }
 
       function buildIdentityFromFields() {
@@ -592,40 +453,32 @@
               is_org_admin: true
             }
           },
-          entitlements: {
-            cost_management: { is_entitled: true }
-          }
+          entitlements: { cost_management: { is_entitled: true } }
         };
       }
 
       function syncJsonFromFields() {
-        if (!identityFromJson) {
-          els.devIdentityJson.value = JSON.stringify(buildIdentityFromFields(), null, 2);
-        }
+        els.devIdentityJson.value = JSON.stringify(buildIdentityFromFields(), null, 2);
       }
 
       function parseIdentityJson() {
         try {
           return JSON.parse(els.devIdentityJson.value);
-        } catch {
+        } catch (e) {
           return buildIdentityFromFields();
         }
       }
 
-      function applyIdentityToFields(identity) {
-        const id = identity?.identity || {};
-        const user = id.user || {};
-        els.devUsername.value = user.username || "admin";
-        els.devEmail.value = user.email || "admin@example.com";
-        els.devOrgId.value = id.org_id || "1234567";
-        els.devAccount.value = id.account_number || "10001";
-        els.devIdentityJson.value = JSON.stringify(identity, null, 2);
-        identityFromJson = false;
-      }
-
       function buildConfig() {
-        const authMode = els.authDev.checked ? "dev" : "oidc";
-        const config = {
+        var connMode = els.connSaas.checked ? "saas" : "private";
+        var authMode = els.devModeToggle.checked
+          ? "dev"
+          : els.authOfflineToken.checked
+            ? "offline_token"
+            : "service_account";
+
+        return {
+          connection_mode: connMode,
           server_url: els.serverUrl.value.trim(),
           auth_mode: authMode,
           theme: els.themeSelect.value,
@@ -633,44 +486,57 @@
             ros: els.moduleRos.checked,
             sources: els.moduleSources.checked
           },
-          oidc: {
-            keycloak_url: els.oidcKeycloakUrl.value.trim(),
-            realm: els.oidcRealm.value.trim(),
-            client_id: els.oidcClientId.value.trim(),
-            client_secret: els.oidcClientSecret.value,
-            username: els.oidcUsername.value.trim(),
-            password: els.oidcPassword.value
+          service_account: {
+            client_id: els.clientId.value.trim(),
+            client_secret: els.clientSecret.value,
+            token_endpoint: els.tokenEndpoint.value.trim(),
+            display_name: els.displayName.value.trim()
           },
-          dev_identity: authMode === "dev" ? parseIdentityJson() : DEFAULT_IDENTITY
+          offline_token: els.offlineToken.value.trim(),
+          dev_identity: els.devModeToggle.checked ? parseIdentityJson() : DEFAULT_IDENTITY
         };
-        return config;
       }
 
       function populateForm(config) {
-        els.serverUrl.value = config.server_url || "http://localhost:8000";
-        if (config.auth_mode === "oidc") {
-          els.authOidc.checked = true;
+        if (config.connection_mode === "saas") {
+          els.connSaas.checked = true;
         } else {
-          els.authDev.checked = true;
+          els.connPrivate.checked = true;
         }
-        els.oidcKeycloakUrl.value = config.oidc?.keycloak_url || "";
-        els.oidcRealm.value = config.oidc?.realm || "kubernetes";
-        els.oidcClientId.value = config.oidc?.client_id || "cost-management-ui";
-        els.oidcClientSecret.value = config.oidc?.client_secret || "";
-        els.oidcUsername.value = config.oidc?.username || "";
-        els.oidcPassword.value = config.oidc?.password || "";
-        applyIdentityToFields(config.dev_identity || DEFAULT_IDENTITY);
+        els.serverUrl.value = config.server_url || "";
+
+        if (config.auth_mode === "offline_token") {
+          els.authOfflineToken.checked = true;
+        } else {
+          els.authServiceAccount.checked = true;
+        }
+        els.offlineToken.value = config.offline_token || "";
+
+        els.displayName.value = config.service_account?.display_name || "";
+        els.clientId.value = config.service_account?.client_id || "";
+        els.clientSecret.value = config.service_account?.client_secret || "";
+        els.tokenEndpoint.value = config.service_account?.token_endpoint || "";
+
         els.moduleRos.checked = config.modules?.ros !== false;
         els.moduleSources.checked = config.modules?.sources !== false;
         els.themeSelect.value = config.theme || "system";
         applyTheme(els.themeSelect.value);
-        updateAuthPanels();
-      }
 
-      function updateAuthPanels() {
-        const isDev = els.authDev.checked;
-        els.devPanel.hidden = !isDev;
-        els.oidcPanel.hidden = isDev;
+        var isDev = config.auth_mode === "dev";
+        els.devModeToggle.checked = isDev;
+        if (isDev) {
+          els.devSection.open = true;
+        }
+
+        var id = config.dev_identity || DEFAULT_IDENTITY;
+        var user = id?.identity?.user || {};
+        els.devUsername.value = user.username || "admin";
+        els.devEmail.value = user.email || "admin@example.com";
+        els.devOrgId.value = id?.identity?.org_id || "1234567";
+        els.devAccount.value = id?.identity?.account_number || "10001";
+        els.devIdentityJson.value = JSON.stringify(id, null, 2);
+
+        updatePanels();
       }
 
       function showTestResult(type, html) {
@@ -684,11 +550,15 @@
         els.testResult.innerHTML = "";
       }
 
-      const checkIcon = '<svg class="test-result__icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M6.5 11.5 3 8l1-1 2.5 2.5L12 4l1 1-6.5 6.5z"/></svg>';
-      const errorIcon = '<svg class="test-result__icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm3.5 9.5-1 1L8 9l-2.5 2.5-1-1L7 8 4.5 5.5l1-1L8 7l2.5-2.5 1 1L9 8l2.5 2.5z"/></svg>';
+      var checkIcon = '<svg class="test-result__icon" viewBox="0 0 16 16"><path fill="currentColor" d="M6.5 11.5 3 8l1-1 2.5 2.5L12 4l1 1-6.5 6.5z"/></svg>';
+      var errorIcon = '<svg class="test-result__icon" viewBox="0 0 16 16"><path fill="currentColor" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm3.5 9.5-1 1L8 9l-2.5 2.5-1-1L7 8 4.5 5.5l1-1L8 7l2.5-2.5 1 1L9 8l2.5 2.5z"/></svg>';
+
+      function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
 
       async function testConnection() {
-        const serverUrl = els.serverUrl.value.trim();
+        var serverUrl = els.serverUrl.value.trim();
         if (!serverUrl) {
           showTestResult("error", errorIcon + "<span>Enter a server URL first.</span>");
           return;
@@ -696,24 +566,25 @@
 
         hideTestResult();
         els.testBtn.disabled = true;
-        const originalLabel = els.testBtn.textContent;
-        els.testBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Testing…</span>';
+        var originalLabel = els.testBtn.textContent;
+        els.testBtn.innerHTML = '<span class="spinner"></span><span>Testing\u2026</span>';
 
         try {
-          const result = await invoke("test_connection", { url: serverUrl });
-          const version = result?.version || result?.data?.version || result?.cost_management_version || "unknown";
-          showTestResult("success", checkIcon + "<span>Connected — server version " + escapeHtml(String(version)) + "</span>");
+          var result = await invoke("test_connection", { url: serverUrl });
+          if (result && result.success) {
+            var body = typeof result.body === "string" ? JSON.parse(result.body) : result.body;
+            var version = body?.server_version || body?.api_version || "OK";
+            showTestResult("success", checkIcon + "<span>Connected \u2014 " + escapeHtml(String(version)) + "</span>");
+          } else {
+            var errMsg = result?.error || "Server returned status " + result?.status;
+            showTestResult("error", errorIcon + "<span>" + escapeHtml(errMsg) + "</span>");
+          }
         } catch (err) {
-          const message = err?.message || err?.toString?.() || "Connection failed";
-          showTestResult("error", errorIcon + "<span>" + escapeHtml(message) + "</span>");
+          showTestResult("error", errorIcon + "<span>" + escapeHtml(String(err?.message || err)) + "</span>");
         } finally {
           els.testBtn.disabled = false;
           els.testBtn.textContent = originalLabel;
         }
-      }
-
-      function escapeHtml(str) {
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
       }
 
       async function saveConfig(event) {
@@ -732,26 +603,32 @@
         applyTheme("system");
 
         try {
-          const config = await invoke("get_config");
-          if (config && config.server_url) {
+          var config = await invoke("get_config");
+          if (config && (config.server_url || config.connection_mode === "saas")) {
             hasExistingConfig = true;
             populateForm(config);
             els.cancelBtn.hidden = false;
           } else {
             populateForm({
+              connection_mode: "private",
               server_url: "",
               auth_mode: "dev",
               theme: "system",
               modules: { ros: true, sources: true },
+              service_account: { client_id: "", client_secret: "", token_endpoint: "" },
+              offline_token: "",
               dev_identity: DEFAULT_IDENTITY
             });
           }
-        } catch {
+        } catch (e) {
           populateForm({
+            connection_mode: "private",
             server_url: "",
             auth_mode: "dev",
             theme: "system",
             modules: { ros: true, sources: true },
+            service_account: { client_id: "", client_secret: "", token_endpoint: "" },
+            offline_token: "",
             dev_identity: DEFAULT_IDENTITY
           });
         }
@@ -761,31 +638,31 @@
 
       els.testBtn.addEventListener("click", testConnection);
       els.form.addEventListener("submit", saveConfig);
-      els.cancelBtn.addEventListener("click", () => { window.location.href = "/"; });
+      els.cancelBtn.addEventListener("click", function () { window.location.href = "/"; });
 
-      [els.devUsername, els.devEmail, els.devOrgId, els.devAccount].forEach((input) => {
-        input.addEventListener("input", () => {
-          identityFromJson = false;
-          syncJsonFromFields();
-        });
+      document.querySelectorAll('input[name="connection_mode"]').forEach(function (r) {
+        r.addEventListener("change", updatePanels);
       });
 
-      els.devIdentityJson.addEventListener("input", () => {
-        identityFromJson = true;
+      document.querySelectorAll('input[name="auth_method"]').forEach(function (r) {
+        r.addEventListener("change", updatePanels);
       });
 
-      els.themeSelect.addEventListener("change", () => {
+      els.devModeToggle.addEventListener("change", function () {
+        updatePanels();
+        if (els.devModeToggle.checked) syncJsonFromFields();
+      });
+
+      [els.devUsername, els.devEmail, els.devOrgId, els.devAccount].forEach(function (input) {
+        input.addEventListener("input", syncJsonFromFields);
+      });
+
+      els.themeSelect.addEventListener("change", function () {
         applyTheme(els.themeSelect.value);
       });
 
-      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-        if (els.themeSelect.value === "system") {
-          applyTheme("system");
-        }
-      });
-
-      document.querySelectorAll('input[name="auth_mode"]').forEach((radio) => {
-        radio.addEventListener("change", updateAuthPanels);
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+        if (els.themeSelect.value === "system") applyTheme("system");
       });
 
       init();

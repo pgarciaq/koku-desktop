@@ -3,22 +3,37 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+const SAAS_SERVER_URL: &str = "https://console.redhat.com";
+const SAAS_TOKEN_ENDPOINT: &str =
+    "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
+    pub connection_mode: ConnectionMode,
     pub server_url: String,
     pub auth_mode: AuthMode,
     pub theme: Theme,
     pub modules: ModuleConfig,
     #[serde(default)]
-    pub oidc: OidcConfig,
+    pub service_account: ServiceAccountConfig,
+    #[serde(default)]
+    pub offline_token: String,
     pub dev_identity: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
+pub enum ConnectionMode {
+    Saas,
+    Private,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum AuthMode {
+    OfflineToken,
+    ServiceAccount,
     Dev,
-    Oidc,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -36,46 +51,45 @@ pub struct ModuleConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OidcConfig {
-    #[serde(default = "default_keycloak_url")]
-    pub keycloak_url: String,
-    #[serde(default = "default_realm")]
-    pub realm: String,
+pub struct ServiceAccountConfig {
     #[serde(default)]
     pub client_id: String,
     #[serde(default)]
     pub client_secret: String,
     #[serde(default)]
-    pub username: String,
+    pub token_endpoint: String,
     #[serde(default)]
-    pub password: String,
+    pub display_name: String,
 }
 
-fn default_keycloak_url() -> String {
-    "https://keycloak.example.com".to_string()
-}
-
-fn default_realm() -> String {
-    "cost-management".to_string()
-}
-
-impl Default for OidcConfig {
+impl Default for ServiceAccountConfig {
     fn default() -> Self {
         Self {
-            keycloak_url: default_keycloak_url(),
-            realm: default_realm(),
-            client_id: "cost-management-ui".to_string(),
+            client_id: String::new(),
             client_secret: String::new(),
-            username: String::new(),
-            password: String::new(),
+            token_endpoint: String::new(),
+            display_name: String::new(),
         }
     }
 }
 
-impl OidcConfig {
-    pub fn token_url(&self) -> String {
-        let base = self.keycloak_url.trim_end_matches('/');
-        format!("{base}/realms/{}/protocol/openid-connect/token", self.realm)
+impl AppConfig {
+    pub fn effective_server_url(&self) -> &str {
+        match self.connection_mode {
+            ConnectionMode::Saas => SAAS_SERVER_URL,
+            ConnectionMode::Private => &self.server_url,
+        }
+    }
+
+    pub fn effective_token_endpoint(&self) -> &str {
+        match self.connection_mode {
+            ConnectionMode::Saas => SAAS_TOKEN_ENDPOINT,
+            ConnectionMode::Private => &self.service_account.token_endpoint,
+        }
+    }
+
+    pub fn is_saas(&self) -> bool {
+        self.connection_mode == ConnectionMode::Saas
     }
 }
 
@@ -100,6 +114,7 @@ fn default_dev_identity() -> serde_json::Value {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            connection_mode: ConnectionMode::Private,
             server_url: "http://localhost:8000".to_string(),
             auth_mode: AuthMode::Dev,
             theme: Theme::System,
@@ -107,7 +122,8 @@ impl Default for AppConfig {
                 ros: true,
                 sources: true,
             },
-            oidc: OidcConfig::default(),
+            service_account: ServiceAccountConfig::default(),
+            offline_token: String::new(),
             dev_identity: default_dev_identity(),
         }
     }
