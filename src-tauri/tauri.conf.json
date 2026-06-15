@@ -8,19 +8,7 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [
-      {
-        "label": "main",
-        "title": "Red Hat Lightspeed Cost Management Desktop",
-        "width": 1280,
-        "height": 800,
-        "minWidth": 800,
-        "minHeight": 600,
-        "visible": false,
-        "create": false,
-        "decorations": true
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }
