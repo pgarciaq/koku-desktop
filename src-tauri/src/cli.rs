@@ -215,12 +215,16 @@ pub fn run() -> Option<Cli> {
         return Some(cli);
     }
 
-    // Re-attach console on Windows so output is visible
+    // Re-attach to parent console on Windows so CLI output is visible
+    // when launched from cmd.exe or PowerShell (windows_subsystem = "windows"
+    // detaches the console by default in release builds).
     #[cfg(target_os = "windows")]
     unsafe {
-        windows_sys::Win32::System::Console::AttachConsole(
-            windows_sys::Win32::System::Console::ATTACH_PARENT_PROCESS,
-        );
+        extern "system" {
+            fn AttachConsole(process_id: u32) -> i32;
+        }
+        const ATTACH_PARENT_PROCESS: u32 = 0xFFFFFFFF;
+        AttachConsole(ATTACH_PARENT_PROCESS);
     }
 
     match cli.command.as_ref().unwrap() {
