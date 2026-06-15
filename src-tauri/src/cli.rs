@@ -219,12 +219,12 @@ pub fn run() -> Option<Cli> {
     // when launched from cmd.exe or PowerShell (windows_subsystem = "windows"
     // detaches the console by default in release builds).
     #[cfg(target_os = "windows")]
-    unsafe {
-        extern "system" {
+    {
+        unsafe extern "system" {
             fn AttachConsole(process_id: u32) -> i32;
         }
         const ATTACH_PARENT_PROCESS: u32 = 0xFFFFFFFF;
-        AttachConsole(ATTACH_PARENT_PROCESS);
+        unsafe { AttachConsole(ATTACH_PARENT_PROCESS) };
     }
 
     match cli.command.as_ref().unwrap() {
