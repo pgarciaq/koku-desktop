@@ -135,6 +135,23 @@ jobs:
           echo "=== ui/costManagement/ ==="
           ls ui/costManagement/ 2>/dev/null || echo "(not found)"
 
+      - name: Fix Windows-incompatible filenames
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # Webpack Module Federation creates directories named "exposed-."
+          # (from exposed: { './RootApp': ... }). NTFS silently strips trailing
+          # dots, so Tauri's build can't find them. Rename to "exposed-_dot".
+          find ui -name "exposed-." -type d 2>/dev/null | while read d; do
+            mv "$d" "${d%?}_dot"
+            echo "Renamed: $d -> ${d%?}_dot"
+          done
+          # Also check for already-stripped names (NTFS may have done it)
+          find ui -name "exposed-" -type d 2>/dev/null | while read d; do
+            mv "$d" "${d}_dot"
+            echo "Renamed: $d -> ${d}_dot"
+          done
+
       - name: Stamp version
         shell: bash
         run: bash scripts/stamp-version.sh

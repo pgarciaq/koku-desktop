@@ -237,6 +237,19 @@ async fn serve_ui(state: ProxyState, request: Request) -> Response {
         return serve_path(&state, &file_path, path.ends_with(".html")).await;
     }
 
+    // On Windows, "exposed-." directories are renamed to "exposed-_dot" because
+    // NTFS silently strips trailing dots. Try the renamed path as a fallback.
+    #[cfg(target_os = "windows")]
+    if !relative.is_empty() {
+        let fixed = relative.replace("exposed-.", "exposed-_dot");
+        if fixed != relative {
+            let alt_path = ui_root.join(&fixed);
+            if alt_path.is_file() {
+                return serve_path(&state, &alt_path, path.ends_with(".html")).await;
+            }
+        }
+    }
+
     let index_path = ui_root.join("index.html");
     if index_path.is_file() {
         return serve_path(&state, &index_path, true).await;
