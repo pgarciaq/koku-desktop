@@ -29,8 +29,34 @@ struct AppState {
     proxy_port: u16,
 }
 
-fn project_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..")
+fn find_base_path() -> PathBuf {
+    let dev_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
+    if dev_root.join("ui").is_dir() && dev_root.join("settings").is_dir() {
+        return dev_root;
+    }
+
+    let exe = std::env::current_exe().expect("failed to find executable path");
+    let exe_dir = exe.parent().expect("failed to find executable directory");
+
+    #[cfg(target_os = "linux")]
+    {
+        for name in &["Cost Management Desktop", "koku-desktop"] {
+            let lib_dir = exe_dir.join("../lib").join(name);
+            if lib_dir.join("ui").is_dir() {
+                return lib_dir;
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let resources = exe_dir.join("../Resources");
+        if resources.join("ui").is_dir() {
+            return resources;
+        }
+    }
+
+    exe_dir.to_path_buf()
 }
 
 fn create_auth_provider(
@@ -341,7 +367,7 @@ fn main() {
     let config = Arc::new(RwLock::new(loaded_config));
     let auth = Arc::new(RwLock::new(auth_provider));
 
-    let base_path = project_root();
+    let base_path = find_base_path();
     let config_for_proxy = config.clone();
     let auth_for_proxy = auth.clone();
 

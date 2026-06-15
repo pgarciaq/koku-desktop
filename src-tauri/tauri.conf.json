@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "identifier": "com.redhat.koku-desktop",
   "build": {
-    "frontendDist": "../ui",
+    "frontendDist": "./frontend-stub",
     "devUrl": "http://localhost:9001"
   },
   "app": {
@@ -32,6 +32,12 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": {
+      "../ui": "ui",
+      "../settings": "settings",
+      "../about": "about",
+      "../splash": "splash"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
