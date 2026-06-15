@@ -154,7 +154,11 @@ jobs:
 
       - name: Stamp version
         shell: bash
-        run: bash scripts/stamp-version.sh
+        run: |
+          bash scripts/stamp-version.sh
+          echo "=== Verify stamped files ==="
+          ls -la .stamped-version .stamped-version-meta
+          cat .stamped-version
 
       - name: Upload version metadata
         if: matrix.name == 'Linux x86_64'
@@ -162,9 +166,10 @@ jobs:
         with:
           name: version-meta
           path: |
-            .stamped-version
-            .stamped-version-meta
+            ${{ github.workspace }}/.stamped-version
+            ${{ github.workspace }}/.stamped-version-meta
           retention-days: 1
+          if-no-files-found: error
 
       - name: Build Tauri app
         shell: bash
