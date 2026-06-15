@@ -77,12 +77,15 @@ jobs:
           - name: Linux x86_64
             os: ubuntu-22.04
             rust-target: x86_64-unknown-linux-gnu
+            bundles: deb,rpm
           - name: macOS ARM64
             os: macos-14
             rust-target: aarch64-apple-darwin
+            bundles: dmg
           - name: Windows x86_64
             os: windows-latest
             rust-target: x86_64-pc-windows-msvc
+            bundles: nsis
 
     runs-on: ${{ matrix.os }}
 
@@ -139,12 +142,12 @@ jobs:
       - name: Build Tauri app
         shell: bash
         run: |
+          EXTRA_ARGS=""
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             UI_PATH=$(cygpath -m "$(pwd)/ui")
-            npx tauri build --target ${{ matrix.rust-target }} --config "{\"build\":{\"frontendDist\":\"$UI_PATH\"}}"
-          else
-            npx tauri build --target ${{ matrix.rust-target }}
+            EXTRA_ARGS="--config {\"build\":{\"frontendDist\":\"$UI_PATH\"}}"
           fi
+          npx tauri build --target ${{ matrix.rust-target }} --bundles ${{ matrix.bundles }} $EXTRA_ARGS
 
       - name: Collect release assets
         shell: bash
@@ -179,9 +182,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts/
+          pattern: build-*
+
+      - name: Flatten release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts/ -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.exe' -o -name '*.msi' \) \
+            -exec cp {} release-assets/ \;
+          echo "=== Release assets ==="
+          ls -lh release-assets/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: artifacts/**/*
+          generate_release_notes: true
+          files: release-assets/*
