@@ -301,6 +301,7 @@
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
       <li><a href="#screenshots">Screenshots</a></li>
+      <li><a href="#cli">CLI</a></li>
       <li><a href="#install">Install</a></li>
       <li><a href="#shortcuts">Shortcuts</a></li>
       <li><a href="https://github.com/pgarciaq/koku-desktop">GitHub</a></li>
@@ -500,6 +501,111 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLI -->
+<section id="cli">
+  <div class="section-inner">
+    <p class="section-label">Enterprise Deployment</p>
+    <h2 class="section-title">Command-line configuration</h2>
+    <p class="section-subtitle">Manage connection profiles, themes, and authentication from scripts or configuration management tools &mdash; no GUI required.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <div>
+        <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 1rem;">Profile Management</h3>
+        <div class="install-card" style="margin-bottom: 1rem;">
+          <h3>Create a profile</h3>
+          <pre><code>koku-desktop profile create "Production" \
+  --mode private \
+  --server-url https://cost-mgmt.example.com \
+  --auth password \
+  --username admin \
+  --password "$PASSWORD" \
+  --client-id koku \
+  --client-secret "$SECRET" \
+  --token-endpoint https://keycloak.example.com/\
+realms/cost-management/protocol/\
+openid-connect/token \
+  --activate</code></pre>
+        </div>
+        <div class="install-card" style="margin-bottom: 1rem;">
+          <h3>List profiles</h3>
+          <pre><code>$ koku-desktop profile list
+NAME                           MODE       AUTH             ACTIVE
+----------------------------------------------------------------------
+Red Hat Hybrid Cloud Console   saas       ServiceAccount
+Production                     private    Password         *
+Staging                        private    OfflineToken</code></pre>
+        </div>
+        <div class="install-card">
+          <h3>Switch active profile</h3>
+          <pre><code>koku-desktop profile activate "Staging"</code></pre>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 1rem;">Configuration</h3>
+        <div class="install-card" style="margin-bottom: 1rem;">
+          <h3>Set theme and developer mode</h3>
+          <pre><code>koku-desktop config set-theme dark
+koku-desktop config set-dev off</code></pre>
+        </div>
+        <div class="install-card" style="margin-bottom: 1rem;">
+          <h3>Export and import config</h3>
+          <pre><code># Export to file
+koku-desktop config export backup.json
+
+# Import from file
+koku-desktop config import backup.json
+
+# Print config file path
+koku-desktop config path</code></pre>
+        </div>
+        <div class="install-card" style="margin-bottom: 1rem;">
+          <h3>Update and inspect profiles</h3>
+          <pre><code># Update server URL
+koku-desktop profile update "Production" \
+  --server-url https://new-host.example.com
+
+# Show profile details (secrets masked)
+koku-desktop profile show "Production"
+
+# Delete a profile
+koku-desktop profile delete "Staging"</code></pre>
+        </div>
+        <div class="install-card">
+          <h3>Launch with a specific profile</h3>
+          <pre><code>koku-desktop --profile "Production"</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 0.75rem;">All CLI commands</h3>
+      <table class="shortcuts-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>profile list [--json]</code></td><td>List all connection profiles</td></tr>
+          <tr><td><code>profile show [NAME] [--json]</code></td><td>Show profile details (active if name omitted)</td></tr>
+          <tr><td><code>profile create NAME [opts]</code></td><td>Create a new connection profile</td></tr>
+          <tr><td><code>profile update NAME [opts]</code></td><td>Update an existing profile</td></tr>
+          <tr><td><code>profile delete NAME</code></td><td>Delete a connection profile</td></tr>
+          <tr><td><code>profile activate NAME</code></td><td>Set a profile as active</td></tr>
+          <tr><td><code>config show</code></td><td>Print full configuration as JSON</td></tr>
+          <tr><td><code>config set-theme light|dark|system</code></td><td>Set the UI theme</td></tr>
+          <tr><td><code>config set-dev on|off</code></td><td>Toggle developer mode</td></tr>
+          <tr><td><code>config import FILE</code></td><td>Import configuration from JSON file</td></tr>
+          <tr><td><code>config export [FILE]</code></td><td>Export configuration (to file or stdout)</td></tr>
+          <tr><td><code>config path</code></td><td>Print the config file path</td></tr>
+          <tr><td><code>--profile NAME</code></td><td>Launch GUI with a specific profile</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--rh-gray-600);">
+        Profile options: <code>--mode</code> saas|private, <code>--server-url</code>, <code>--auth</code> offline-token|service-account|password|dev,
+        <code>--offline-token</code>, <code>--client-id</code>, <code>--client-secret</code>, <code>--token-endpoint</code>,
+        <code>--display-name</code>, <code>--username</code>, <code>--password</code>, <code>--activate</code>
+      </p>
     </div>
   </div>
 </section>
