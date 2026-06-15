@@ -30,7 +30,7 @@ jobs:
 
       - name: Clone koku-ui
         run: |
-          git clone --depth 1 https://github.com/project-koku/koku-ui.git /tmp/koku-ui
+          git clone --depth 1 --branch pgarciaq-koku-desktop https://github.com/pgarciaq/koku-ui.git /tmp/koku-ui
           cd /tmp/koku-ui
           git submodule update --init --depth 1
 
