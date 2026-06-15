@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod auth;
+mod cli;
 mod config;
 mod proxy;
 
@@ -313,11 +314,27 @@ async fn get_server_status(state: State<'_, AppState>) -> Result<serde_json::Val
 }
 
 fn main() {
+    let cli = match cli::run() {
+        Some(c) => c,
+        None => return, // subcommand handled, exit
+    };
+
     let log_dir = AppConfig::config_dir().join("logs");
     let _ = std::fs::create_dir_all(&log_dir);
 
-    let loaded_config = AppConfig::load().expect("failed to load configuration");
+    let mut loaded_config = AppConfig::load().expect("failed to load configuration");
     let first_launch = AppConfig::is_first_launch();
+
+    if let Some(ref profile_name) = cli.profile_override {
+        match loaded_config.profiles.iter().find(|p| p.name == *profile_name) {
+            Some(p) => loaded_config.active_profile = p.id.clone(),
+            None => {
+                eprintln!("Error: profile '{profile_name}' not found");
+                std::process::exit(1);
+            }
+        }
+    }
+
     let active = loaded_config.active_profile().clone();
     let auth_provider = create_auth_provider(&active, &loaded_config.dev_identity)
         .expect("failed to create auth provider");
