@@ -146,14 +146,27 @@ jobs:
             npx tauri build --target ${{ matrix.rust-target }}
           fi
 
+      - name: Collect release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          BUNDLE="src-tauri/target/${{ matrix.rust-target }}/release/bundle"
+          # Linux: .deb and .rpm
+          cp $BUNDLE/deb/*.deb release-assets/ 2>/dev/null || true
+          cp $BUNDLE/rpm/*.rpm release-assets/ 2>/dev/null || true
+          # macOS: .dmg
+          cp $BUNDLE/dmg/*.dmg release-assets/ 2>/dev/null || true
+          # Windows: .exe (NSIS installer) and .msi
+          cp $BUNDLE/nsis/*.exe release-assets/ 2>/dev/null || true
+          cp $BUNDLE/msi/*.msi release-assets/ 2>/dev/null || true
+          echo "=== Release assets ==="
+          ls -lh release-assets/
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.name }}
-          path: |
-            src-tauri/target/${{ matrix.rust-target }}/release/bundle/**/*
-            src-tauri/target/${{ matrix.rust-target }}/release/koku-desktop
-            src-tauri/target/${{ matrix.rust-target }}/release/koku-desktop.exe
+          path: release-assets/*
           if-no-files-found: warn
           retention-days: 7
 
