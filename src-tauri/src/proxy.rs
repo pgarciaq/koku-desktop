@@ -542,6 +542,15 @@ document.addEventListener('DOMContentLoaded', function() {{
     }}
   }};
 
+  window.kdNavigate = function(path) {{
+    if (path.startsWith('/_')) {{
+      window.location.href = path;
+    }} else {{
+      history.pushState(null, '', path);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }}
+  }};
+
   function doAction(act) {{
     if (act === 'print') window.print();
     else if (act === 'quit' && invoke) invoke('quit_app');
@@ -573,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         var btn = document.createElement('button');
         btn.className = 'kd-item';
         btn.innerHTML = item.label + (item.shortcut ? '<span class="kd-shortcut">' + item.shortcut + '</span>' : '');
-        btn.addEventListener('click', function() {{ closeAll(); if (item.nav) window.location.href=item.nav; if (item.action) doAction(item.action); }});
+        btn.addEventListener('click', function() {{ closeAll(); if (item.nav) kdNavigate(item.nav); if (item.action) doAction(item.action); }});
         dd.appendChild(btn);
       }});
       dropdowns.push(dd);
@@ -701,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {{
       btn.className = 'pf-v6-c-menu__item';
       btn.setAttribute('role', 'menuitem');
       btn.innerHTML = '<span class="pf-v6-c-menu__item-main"><span class="pf-v6-c-menu__item-text">My User Access</span></span><span style="margin-left:auto;font-size:11px;color:var(--kd-bar-fg2,#6a6e73)">Ctrl+M</span>';
-      btn.addEventListener('click', function() {{ window.location.href='/iam/my-user-access'; }});
+      btn.addEventListener('click', function() {{ kdNavigate('/iam/my-user-access'); }});
       li.appendChild(btn);
       logout.before(li);
     }});
@@ -712,14 +721,14 @@ document.addEventListener('DOMContentLoaded', function() {{
     var ctrl = e.ctrlKey || e.metaKey;
     if (ctrl && !e.shiftKey) {{
       switch(e.key.toLowerCase()) {{
-        case 'h': e.preventDefault(); window.location.href='/openshift/cost-management/'; break;
-        case 'o': e.preventDefault(); window.location.href='/openshift/cost-management/ocp'; break;
-        case 'w': e.preventDefault(); window.location.href='/openshift/cost-management/aws'; break;
-        case 'u': e.preventDefault(); window.location.href='/openshift/cost-management/azure'; break;
-        case 'g': e.preventDefault(); window.location.href='/openshift/cost-management/gcp'; break;
-        case 'e': e.preventDefault(); window.location.href='/openshift/cost-management/explorer'; break;
-        case 's': e.preventDefault(); window.location.href='/openshift/cost-management/settings'; break;
-        case 'm': e.preventDefault(); window.location.href='/iam/my-user-access'; break;
+        case 'h': e.preventDefault(); kdNavigate('/openshift/cost-management/'); break;
+        case 'o': e.preventDefault(); kdNavigate('/openshift/cost-management/ocp'); break;
+        case 'w': e.preventDefault(); kdNavigate('/openshift/cost-management/aws'); break;
+        case 'u': e.preventDefault(); kdNavigate('/openshift/cost-management/azure'); break;
+        case 'g': e.preventDefault(); kdNavigate('/openshift/cost-management/gcp'); break;
+        case 'e': e.preventDefault(); kdNavigate('/openshift/cost-management/explorer'); break;
+        case 's': e.preventDefault(); kdNavigate('/openshift/cost-management/settings'); break;
+        case 'm': e.preventDefault(); kdNavigate('/iam/my-user-access'); break;
         case 't': e.preventDefault(); doAction('theme'); break;
         case 'p': e.preventDefault(); doAction('print'); break;
         case 'q': e.preventDefault(); doAction('quit'); break;
@@ -727,10 +736,10 @@ document.addEventListener('DOMContentLoaded', function() {{
     }}
     if (ctrl && e.shiftKey) {{
       switch(e.key.toLowerCase()) {{
-        case 'w': e.preventDefault(); window.location.href='/iam/user-access/overview'; break;
-        case 'u': e.preventDefault(); window.location.href='/iam/user-access/users'; break;
-        case 'g': e.preventDefault(); window.location.href='/iam/user-access/groups'; break;
-        case 'r': e.preventDefault(); window.location.href='/iam/user-access/roles'; break;
+        case 'w': e.preventDefault(); kdNavigate('/iam/user-access/overview'); break;
+        case 'u': e.preventDefault(); kdNavigate('/iam/user-access/users'); break;
+        case 'g': e.preventDefault(); kdNavigate('/iam/user-access/groups'); break;
+        case 'r': e.preventDefault(); kdNavigate('/iam/user-access/roles'); break;
       }}
     }}
     if (e.key === 'Escape') closeAll();

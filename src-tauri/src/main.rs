@@ -93,10 +93,18 @@ fn proxy_url(port: u16, path: &str) -> String {
 
 fn navigate(app: &AppHandle, path: &str) {
     let state = app.state::<AppState>();
-    let url = proxy_url(state.proxy_port, path);
     if let Some(window) = app.get_webview_window("main") {
-        let script = format!("window.location.href = {url:?};");
-        let _ = window.eval(&script);
+        if path.starts_with("/_") {
+            let url = proxy_url(state.proxy_port, path);
+            let script = format!("window.location.href = {url:?};");
+            let _ = window.eval(&script);
+        } else {
+            let script = format!(
+                "if (typeof kdNavigate === 'function') {{ kdNavigate({path:?}); }} \
+                 else {{ window.location.href = {path:?}; }}"
+            );
+            let _ = window.eval(&script);
+        }
     }
 }
 
@@ -527,11 +535,24 @@ fn main() {
             #[cfg(target_os = "linux")]
             {
                 use gtk::prelude::{CssProviderExt, GtkWindowExt, StyleContextExt, WidgetExt};
+                use gtk::glib::object::ObjectExt;
+
+                // Tell GTK to prefer dark theme so tray menu text is
+                // readable on GNOME dark backgrounds.
+                if let Some(settings) = gtk::Settings::default() {
+                    let prefers_dark = std::process::Command::new("gsettings")
+                        .args(["get", "org.gnome.desktop.interface", "color-scheme"])
+                        .output()
+                        .ok()
+                        .and_then(|o| String::from_utf8(o.stdout).ok())
+                        .map(|s| s.contains("dark"))
+                        .unwrap_or(false);
+                    settings.set_property("gtk-application-prefer-dark-theme", prefers_dark);
+                }
 
                 let gtk_window = main_window.gtk_window()
                     .map_err(|e| anyhow::anyhow!("failed to get GTK window: {e}"))?;
 
-                // Tag our window so CSS rules only apply to it, not tray popups
                 gtk_window.style_context().add_class("kd-main");
 
                 let css = gtk::CssProvider::new();
