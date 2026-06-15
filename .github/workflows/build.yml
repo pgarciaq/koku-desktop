@@ -166,10 +166,11 @@ jobs:
         with:
           name: version-meta
           path: |
-            ${{ github.workspace }}/.stamped-version
-            ${{ github.workspace }}/.stamped-version-meta
+            .stamped-version
+            .stamped-version-meta
           retention-days: 1
           if-no-files-found: error
+          include-hidden-files: true
 
       - name: Build Tauri app
         shell: bash
