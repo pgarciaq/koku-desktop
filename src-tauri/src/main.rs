@@ -437,7 +437,8 @@ fn main() {
 
             let splash_url = proxy_url(proxy_port, "/_splash/");
             let actual_start_url = start_url.clone();
-            let main_window = WebviewWindowBuilder::new(
+            #[allow(unused_mut)]
+            let mut win_builder = WebviewWindowBuilder::new(
                 app,
                 "main",
                 WebviewUrl::External(
@@ -448,7 +449,17 @@ fn main() {
             )
             .title("Red Hat Lightspeed Cost Management Desktop")
             .inner_size(1280.0, 800.0)
-            .min_inner_size(800.0, 600.0)
+            .min_inner_size(800.0, 600.0);
+
+            // On Windows and macOS, disable native decorations since we draw our
+            // own titlebar (see proxy.rs). On Linux, we keep decorations enabled
+            // and use a GTK hack to hide them (see below).
+            #[cfg(not(target_os = "linux"))]
+            {
+                win_builder = win_builder.decorations(false);
+            }
+
+            let main_window = win_builder
             .on_download(move |_webview, event| match event {
                 DownloadEvent::Requested { url, destination } => {
                     let filename = default_download_filename(&url);
