@@ -2,13 +2,17 @@
 #
 # Assemble the full package version from:
 #   - VERSION file (base semver, e.g. "0.2.0")
-#   - ui/.build-info (koku-ui date + 10-char git hash)
+#   - Current UTC timestamp (YYYYMMDD.HHMMSS)
 #
 # Tauri requires strict semver, so the format uses pre-release syntax:
-#   0.2.0-20260602.6dc900b701
+#   0.2.0-20260615.143022
 #
-# RPM/DEB package managers sort the date component chronologically,
-# making every koku-ui rebuild an upgradeable package.
+# The timestamp guarantees chronological sorting across all package
+# managers (RPM, DEB, NSIS, DMG) and GitHub Releases.
+#
+# Commit hashes for both koku-desktop and koku-ui are written to
+# .stamped-version-meta for inclusion in release notes, but are NOT
+# part of the version string itself.
 #
 set -euo pipefail
 
@@ -26,24 +30,27 @@ if [[ ! -f "$VERSION_FILE" ]]; then
 fi
 
 BASE_VERSION=$(tr -d '[:space:]' < "$VERSION_FILE")
+TIMESTAMP=$(date -u +%Y%m%d.%H%M%S)
+FULL_VERSION="${BASE_VERSION}-${TIMESTAMP}"
+
+DESKTOP_HASH=$(cd "$PROJECT_DIR" && git rev-parse HEAD 2>/dev/null | head -c 10 || echo "unknown")
 
 if [[ -f "$BUILD_INFO" ]]; then
-  read -r UI_DATE UI_HASH _REST < "$BUILD_INFO"
+  read -r UI_DATE UI_HASH UI_REF_REST < "$BUILD_INFO"
 else
-  echo "Warning: ui/.build-info not found, using koku-desktop git info" >&2
-  UI_DATE=$(date +%Y%m%d)
-  UI_HASH=$(cd "$PROJECT_DIR" && git rev-parse HEAD 2>/dev/null | head -c 10 || echo "0000000000")
+  echo "Warning: ui/.build-info not found" >&2
+  UI_DATE="unknown"
+  UI_HASH="unknown"
 fi
 
-FULL_VERSION="${BASE_VERSION}-${UI_DATE}.${UI_HASH}"
-
 echo "Version: $FULL_VERSION"
-echo "  base:      $BASE_VERSION"
-echo "  ui date:   $UI_DATE"
-echo "  ui commit: $UI_HASH"
+echo "  base:         $BASE_VERSION"
+echo "  timestamp:    $TIMESTAMP"
+echo "  desktop hash: $DESKTOP_HASH"
+echo "  ui hash:      $UI_HASH"
+echo "  ui date:      $UI_DATE"
 
 # Patch tauri.conf.json using python for reliable cross-platform JSON editing.
-# Pass the file path and version as arguments to avoid shell path quoting issues.
 if [[ -f "$TAURI_CONF" ]]; then
   python3 - "$TAURI_CONF" "$FULL_VERSION" <<'PYEOF'
 import json, sys
@@ -66,4 +73,13 @@ if [[ -f "$CARGO_TOML" ]]; then
 fi
 
 echo "$FULL_VERSION" > "$PROJECT_DIR/.stamped-version"
-echo "  wrote:   .stamped-version"
+echo "  wrote: .stamped-version"
+
+# Write metadata file with commit hashes for release notes
+cat > "$PROJECT_DIR/.stamped-version-meta" <<EOF
+VERSION=$FULL_VERSION
+DESKTOP_HASH=$DESKTOP_HASH
+UI_HASH=$UI_HASH
+UI_DATE=$UI_DATE
+EOF
+echo "  wrote: .stamped-version-meta"

@@ -156,6 +156,16 @@ jobs:
         shell: bash
         run: bash scripts/stamp-version.sh
 
+      - name: Upload version metadata
+        if: matrix.name == 'Linux x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-meta
+          path: |
+            .stamped-version
+            .stamped-version-meta
+          retention-days: 1
+
       - name: Build Tauri app
         shell: bash
         run: |
@@ -201,6 +211,37 @@ jobs:
           path: artifacts/
           pattern: build-*
 
+      - name: Download version metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: version-meta
+          path: meta/
+
+      - name: Prepare release
+        id: prep
+        run: |
+          STAMPED_VERSION=$(cat meta/.stamped-version)
+          echo "version=$STAMPED_VERSION" >> "$GITHUB_OUTPUT"
+
+          source meta/.stamped-version-meta
+          cat > release-body.md <<BODYEOF
+          ## Components
+
+          | Component | Commit |
+          |-----------|--------|
+          | koku-desktop | \`${DESKTOP_HASH}\` |
+          | koku-ui | \`${UI_HASH}\` (${UI_DATE}) |
+
+          ## Downloads
+
+          | Platform | File |
+          |----------|------|
+          | Linux (RPM) | \`.rpm\` |
+          | Linux (DEB) | \`.deb\` |
+          | macOS (ARM64) | \`.dmg\` |
+          | Windows (x64) | \`.exe\` |
+          BODYEOF
+
       - name: Flatten release assets
         run: |
           mkdir -p release-assets
@@ -213,5 +254,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: false
-          generate_release_notes: true
+          body_path: release-body.md
           files: release-assets/*

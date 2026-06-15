@@ -26,3 +26,4 @@ Thumbs.db
 
 # Generated at build time by stamp-version.sh
 .stamped-version
+.stamped-version-meta
