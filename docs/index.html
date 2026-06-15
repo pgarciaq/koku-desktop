@@ -313,7 +313,7 @@
 <header class="hero">
   <div class="hero-content">
     <h1>Red Hat Lightspeed<br><span>Cost Management</span> Desktop</h1>
-    <p>A lightweight native desktop client for Red Hat Cost Management. Connect to console.redhat.com or your private on-prem instance.</p>
+    <p>A lightweight native desktop client for Red Hat Cost Management. Available for Linux, Windows, and macOS. Connect to console.redhat.com or your private on-prem instance.</p>
     <div class="hero-actions">
       <a href="https://github.com/pgarciaq/koku-desktop/releases" class="btn btn-primary">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V4h3v4H12L8 12zM3 14h10v-1H3v1z"/></svg>
@@ -619,21 +619,31 @@ koku-desktop profile delete "Staging"</code></pre>
 
     <div class="install-grid">
       <div class="install-card">
+        <h3>Linux &mdash; RPM (Fedora / RHEL)</h3>
+        <pre><code>sudo rpm -i koku-desktop-*.x86_64.rpm</code></pre>
+      </div>
+      <div class="install-card">
+        <h3>Linux &mdash; DEB (Debian / Ubuntu)</h3>
+        <pre><code>sudo dpkg -i koku-desktop_*_amd64.deb</code></pre>
+      </div>
+      <div class="install-card">
+        <h3>Windows</h3>
+        <pre><code>koku-desktop_*_x64-setup.exe</code></pre>
+        <p style="margin-top: 0.5rem; font-size: 0.8125rem; color: var(--rh-gray-600);">Download the installer from <a href="https://github.com/pgarciaq/koku-desktop/releases" style="color: var(--rh-red);">GitHub Releases</a>.</p>
+      </div>
+      <div class="install-card">
+        <h3>macOS (Apple Silicon)</h3>
+        <pre><code>open "Cost Management Desktop.dmg"</code></pre>
+        <p style="margin-top: 0.5rem; font-size: 0.8125rem; color: var(--rh-gray-600);">Download the .dmg from <a href="https://github.com/pgarciaq/koku-desktop/releases" style="color: var(--rh-red);">GitHub Releases</a>.</p>
+      </div>
+      <div class="install-card">
         <h3>Build from source</h3>
         <pre><code>git clone https://github.com/pgarciaq/koku-desktop.git
 cd koku-desktop
 ./scripts/build-ui.sh
+./scripts/stamp-version.sh
 npx tauri build</code></pre>
-      </div>
-      <div class="install-card">
-        <h3>Install RPM (Fedora / RHEL)</h3>
-        <pre><code>sudo rpm -i "src-tauri/target/release/bundle/rpm/\
-Cost Management Desktop-0.1.0-1.x86_64.rpm"</code></pre>
-      </div>
-      <div class="install-card">
-        <h3>Install DEB (Debian / Ubuntu)</h3>
-        <pre><code>sudo dpkg -i "src-tauri/target/release/bundle/deb/\
-Cost Management Desktop_0.1.0_amd64.deb"</code></pre>
+        <p style="margin-top: 0.5rem; font-size: 0.8125rem; color: var(--rh-gray-600);">Works on Linux, Windows, and macOS. See <a href="https://github.com/pgarciaq/koku-desktop#readme" style="color: var(--rh-red);">README</a> for prerequisites.</p>
       </div>
     </div>
   </div>
