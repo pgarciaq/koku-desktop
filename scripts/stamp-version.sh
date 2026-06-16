@@ -30,7 +30,7 @@ if [[ ! -f "$VERSION_FILE" ]]; then
 fi
 
 BASE_VERSION=$(tr -d '[:space:]' < "$VERSION_FILE")
-TIMESTAMP=$(date -u +%Y%m%d.%H%M%S)
+TIMESTAMP=$(date -u +%Y%m%dT%H%M%S)
 FULL_VERSION="${BASE_VERSION}-${TIMESTAMP}"
 
 DESKTOP_HASH=$(cd "$PROJECT_DIR" && git rev-parse HEAD 2>/dev/null | head -c 10 || echo "unknown")
