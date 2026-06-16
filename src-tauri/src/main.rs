@@ -487,6 +487,14 @@ fn main() {
             })
             .build()?;
 
+            // Belt-and-suspenders: also set decorations(false) after the window
+            // is built. On Windows, the builder setting alone can be ignored when
+            // WebView2 initializes and resets the window style flags.
+            #[cfg(not(target_os = "linux"))]
+            {
+                let _ = main_window.set_decorations(false);
+            }
+
             // GNOME/Wayland titlebar removal hack
             //
             // Problem: koku-desktop uses a custom titlebar injected into the webview
