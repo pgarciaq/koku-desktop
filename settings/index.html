@@ -790,7 +790,20 @@
         els.testBtn.innerHTML = '<span class="spinner"></span><span>Testing\u2026</span>';
 
         try {
-          var result = await invoke("test_connection", { url: serverUrl });
+          var authArgs = {};
+          var authMode = selectedAuthMode();
+          if (authMode === "password") {
+            authArgs.tokenEndpoint = els.pwTokenEndpoint ? els.pwTokenEndpoint.value.trim() : "";
+            authArgs.clientId = els.pwClientId ? els.pwClientId.value.trim() : "";
+            authArgs.clientSecret = els.pwClientSecret ? els.pwClientSecret.value.trim() : "";
+            authArgs.username = els.kcUsername ? els.kcUsername.value.trim() : "";
+            authArgs.password = els.kcPassword ? els.kcPassword.value.trim() : "";
+          } else if (authMode === "service_account") {
+            authArgs.tokenEndpoint = els.tokenEndpoint ? els.tokenEndpoint.value.trim() : "";
+            authArgs.clientId = els.clientId ? els.clientId.value.trim() : "";
+            authArgs.clientSecret = els.clientSecret ? els.clientSecret.value.trim() : "";
+          }
+          var result = await invoke("test_connection", Object.assign({ url: serverUrl }, authArgs));
           if (result && result.success) {
             var body = typeof result.body === "string" ? JSON.parse(result.body) : result.body;
             var version = body?.server_version || body?.api_version || "OK";

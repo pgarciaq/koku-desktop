@@ -1,6 +1,6 @@
 {
   "productName": "Cost Management Desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "identifier": "com.redhat.koku-desktop",
   "build": {
     "frontendDist": "./frontend-stub",

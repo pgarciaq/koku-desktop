@@ -221,29 +221,143 @@ async fn save_config(state: State<'_, AppState>, config: AppConfig) -> Result<()
 }
 
 #[tauri::command]
-async fn test_connection(url: String) -> Result<serde_json::Value, String> {
+async fn test_connection(
+    url: String,
+    token_endpoint: Option<String>,
+    client_id: Option<String>,
+    client_secret: Option<String>,
+    username: Option<String>,
+    password: Option<String>,
+) -> Result<serde_json::Value, String> {
     let base = url.trim_end_matches('/');
-    let status_url = format!("{base}/api/cost-management/v1/status/");
+    let stripped = base.trim_end_matches("/api");
+    let status_url = format!("{stripped}/api/cost-management/v1/status/");
+
+    log::info!("test_connection: url={base}");
+    log::info!("test_connection: token_endpoint={:?}", token_endpoint);
+    log::info!("test_connection: client_id={:?}", client_id);
+    log::info!(
+        "test_connection: client_secret={}",
+        if client_secret.as_ref().map_or(true, |s| s.is_empty()) {
+            "(empty)"
+        } else {
+            "(set)"
+        }
+    );
+    log::info!("test_connection: username={:?}", username);
+    log::info!(
+        "test_connection: password={}",
+        if password.as_ref().map_or(true, |s| s.is_empty()) {
+            "(empty)"
+        } else {
+            "(set)"
+        }
+    );
 
     let client = reqwest::Client::builder()
         .danger_accept_invalid_certs(true)
         .build()
         .map_err(|e| e.to_string())?;
-    match client.get(&status_url).send().await {
+
+    let mut req = client.get(&status_url);
+    let mut got_token = false;
+
+    if let (Some(endpoint), Some(cid), Some(csecret)) =
+        (&token_endpoint, &client_id, &client_secret)
+    {
+        if !endpoint.is_empty() && !cid.is_empty() {
+            let mut params = vec![
+                ("client_id", cid.as_str()),
+                ("client_secret", csecret.as_str()),
+            ];
+            if let (Some(u), Some(p)) = (&username, &password) {
+                if !u.is_empty() {
+                    params.push(("grant_type", "password"));
+                    params.push(("username", u.as_str()));
+                    params.push(("password", p.as_str()));
+                } else {
+                    params.push(("grant_type", "client_credentials"));
+                }
+            } else {
+                params.push(("grant_type", "client_credentials"));
+            }
+
+            log::info!(
+                "test_connection: requesting token from {} with grant_type={}",
+                endpoint,
+                params.iter().find(|(k, _)| *k == "grant_type").map(|(_, v)| *v).unwrap_or("?")
+            );
+
+            match client.post(endpoint.as_str()).form(&params).send().await {
+                Ok(resp) if resp.status().is_success() => {
+                    if let Ok(body) = resp.json::<serde_json::Value>().await {
+                        if let Some(token) = body.get("access_token").and_then(|v| v.as_str()) {
+                            log::info!(
+                                "test_connection: got access_token (len={})",
+                                token.len()
+                            );
+                            req = req.bearer_auth(token);
+                            got_token = true;
+                        } else {
+                            log::warn!(
+                                "test_connection: token response has no access_token: {:?}",
+                                body
+                            );
+                        }
+                    }
+                }
+                Ok(resp) => {
+                    let status = resp.status().as_u16();
+                    let body = resp.text().await.unwrap_or_default();
+                    log::error!(
+                        "test_connection: token endpoint returned {status}: {body}"
+                    );
+                    return Ok(serde_json::json!({
+                        "success": false,
+                        "error": format!("Token endpoint returned {status}: {body}"),
+                    }));
+                }
+                Err(err) => {
+                    log::error!("test_connection: token endpoint error: {err}");
+                    return Ok(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to reach token endpoint: {err}"),
+                    }));
+                }
+            }
+        } else {
+            log::warn!(
+                "test_connection: skipping auth — endpoint or client_id is empty"
+            );
+        }
+    } else {
+        log::warn!("test_connection: no auth params provided (all None)");
+    }
+
+    log::info!(
+        "test_connection: GET {status_url} (auth={})",
+        if got_token { "Bearer" } else { "none" }
+    );
+
+    match req.send().await {
         Ok(response) => {
             let status = response.status().as_u16();
             let success = response.status().is_success();
             let body = response.text().await.unwrap_or_default();
+            log::info!("test_connection: API returned {status}");
             Ok(serde_json::json!({
                 "success": success,
                 "status": status,
                 "body": body,
             }))
         }
-        Err(err) => Ok(serde_json::json!({
-            "success": false,
-            "error": err.to_string(),
-        })),
+        Err(err) => {
+            log::error!("test_connection: request error: {err}");
+            Ok(serde_json::json!({
+                "success": false,
+                "error": err.to_string(),
+            }))
+        }
     }
 }
 

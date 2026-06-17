@@ -165,7 +165,18 @@ async fn proxy_api(state: ProxyState, request: Request) -> Response {
         .path_and_query()
         .map(|pq| pq.as_str())
         .unwrap_or("/");
-    let target_url = format!("{server_url}{path_and_query}");
+
+    // The server_url may already contain a path prefix (e.g. ".../api").
+    // The browser request also starts with "/api/...", so strip the
+    // overlapping prefix to avoid double paths like ".../api/api/...".
+    let base = url::Url::parse(&server_url).ok();
+    let base_path = base.as_ref().map(|u| u.path().trim_end_matches('/')).unwrap_or("");
+    let adjusted_path = if !base_path.is_empty() && path_and_query.starts_with(base_path) {
+        &path_and_query[base_path.len()..]
+    } else {
+        path_and_query
+    };
+    let target_url = format!("{server_url}{adjusted_path}");
 
     let body_bytes = match axum::body::to_bytes(body, 50 * 1024 * 1024).await {
         Ok(bytes) => bytes,
