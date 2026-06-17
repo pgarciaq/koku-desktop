@@ -543,7 +543,9 @@ document.addEventListener('DOMContentLoaded', function() {{
   }};
 
   window.kdNavigate = function(path) {{
-    if (path.startsWith('/_')) {{
+    var onIam = window.location.pathname.startsWith('/iam');
+    var toIam = path.startsWith('/iam');
+    if (path.startsWith('/_') || onIam !== toIam) {{
       window.location.href = path;
     }} else {{
       history.pushState(null, '', path);

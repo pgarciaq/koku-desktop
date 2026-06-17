@@ -100,7 +100,7 @@ fn navigate(app: &AppHandle, path: &str) {
             let _ = window.eval(&script);
         } else {
             let script = format!(
-                "if (typeof kdNavigate === 'function') {{ kdNavigate({path:?}); }} \
+                "if (typeof window.kdNavigate === 'function') {{ window.kdNavigate({path:?}); }} \
                  else {{ window.location.href = {path:?}; }}"
             );
             let _ = window.eval(&script);
