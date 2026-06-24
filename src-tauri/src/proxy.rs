@@ -723,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {{
       btn.className = 'pf-v6-c-menu__item';
       btn.setAttribute('role', 'menuitem');
       btn.innerHTML = '<span class="pf-v6-c-menu__item-main"><span class="pf-v6-c-menu__item-text">My User Access</span></span><span style="margin-left:auto;font-size:11px;color:var(--kd-bar-fg2,#6a6e73)">Ctrl+M</span>';
-      btn.addEventListener('click', function() {{ kdNavigate('/iam/my-user-access'); }});
+      btn.addEventListener('click', function() {{ kdNavigate('/iam/my-user-access?bundle=openshift'); }});
       li.appendChild(btn);
       logout.before(li);
     }});
@@ -741,7 +741,7 @@ document.addEventListener('DOMContentLoaded', function() {{
         case 'g': e.preventDefault(); kdNavigate('/openshift/cost-management/gcp'); break;
         case 'e': e.preventDefault(); kdNavigate('/openshift/cost-management/explorer'); break;
         case 's': e.preventDefault(); kdNavigate('/openshift/cost-management/settings'); break;
-        case 'm': e.preventDefault(); kdNavigate('/iam/my-user-access'); break;
+        case 'm': e.preventDefault(); kdNavigate('/iam/my-user-access?bundle=openshift'); break;
         case 't': e.preventDefault(); doAction('theme'); break;
         case 'p': e.preventDefault(); doAction('print'); break;
         case 'q': e.preventDefault(); doAction('quit'); break;

@@ -313,7 +313,7 @@
 <header class="hero">
   <div class="hero-content">
     <h1>Red Hat Lightspeed<br><span>Cost Management</span> Desktop</h1>
-    <p>A lightweight native desktop client for Red Hat Cost Management. Available for Linux, Windows, and macOS. Connect to console.redhat.com or your private on-prem instance.</p>
+    <p>A lightweight native desktop client for Red Hat Cost Management. Available for Linux, Windows, and macOS. Connect to console.redhat.com or your private on-prem instances.</p>
     <div class="hero-actions">
       <a href="https://github.com/pgarciaq/koku-desktop/releases" class="btn btn-primary">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 12l-4-4h2.5V4h3v4H12L8 12zM3 14h10v-1H3v1z"/></svg>
@@ -391,38 +391,139 @@
     <h2 class="section-title">See it in action</h2>
     <p class="section-subtitle">Click any screenshot to enlarge.</p>
 
+    <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 1rem; margin-top: 1rem;">Desktop Experience</h3>
     <div class="screenshots-grid">
       <figure class="screenshot-item">
         <img src="images/main_screen.png" alt="Overview dashboard" loading="lazy" onclick="openLightbox(this)">
-        <figcaption>Cost Management overview with charts and top projects</figcaption>
+        <figcaption>Overview dashboard with cost charts and top projects</figcaption>
       </figure>
       <figure class="screenshot-item">
-        <img src="images/dark_mode.png" alt="Dark mode — AWS details" loading="lazy" onclick="openLightbox(this)">
-        <figcaption>Dark mode &mdash; AWS service breakdown</figcaption>
+        <img src="images/compact_titlebar.png" alt="Compact titlebar with menus" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Unified titlebar with menus and window controls</figcaption>
       </figure>
       <figure class="screenshot-item">
-        <img src="images/openshift_details.png" alt="OpenShift details" loading="lazy" onclick="openLightbox(this)">
-        <figcaption>OpenShift project details with cost model overhead</figcaption>
+        <img src="images/dark_mode.png" alt="Dark mode" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Dark mode with adaptive theming</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/sidebar.png" alt="Sidebar navigation" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Expandable sidebar navigation</figcaption>
       </figure>
       <figure class="screenshot-item">
         <img src="images/navigation_menu.png" alt="Navigation menu" loading="lazy" onclick="openLightbox(this)">
         <figcaption>Navigate menu with keyboard shortcuts</figcaption>
       </figure>
       <figure class="screenshot-item">
-        <img src="images/instance_selection.png" alt="Private instance configuration" loading="lazy" onclick="openLightbox(this)">
-        <figcaption>Private instance with Username &amp; Password auth</figcaption>
+        <img src="images/user_profile_menubar.png" alt="User profile in menubar" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>User profile integrated in the titlebar</figcaption>
       </figure>
       <figure class="screenshot-item">
-        <img src="images/profile_selection.png" alt="Profile selector dropdown" loading="lazy" onclick="openLightbox(this)">
-        <figcaption>Switch between saved connection profiles</figcaption>
+        <img src="images/splash.png" alt="Splash screen" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Splash screen on startup</figcaption>
       </figure>
       <figure class="screenshot-item">
-        <img src="images/authentication_modes.png" alt="Authentication settings" loading="lazy" onclick="openLightbox(this)">
-        <figcaption>SaaS mode with service account authentication</figcaption>
+        <img src="images/about.png" alt="About window" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>About window with build and connection info</figcaption>
       </figure>
       <figure class="screenshot-item">
-        <img src="images/system-tray.png" alt="System tray menu" loading="lazy" onclick="openLightbox(this)">
+        <img src="images/system-tray.png" alt="System tray" loading="lazy" onclick="openLightbox(this)">
         <figcaption>System tray with quick actions</figcaption>
+      </figure>
+    </div>
+
+    <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 1rem; margin-top: 2.5rem;">OpenShift Cost Management</h3>
+    <div class="screenshots-grid">
+      <figure class="screenshot-item">
+        <img src="images/openshift_details.png" alt="OpenShift details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>OpenShift project details with cost model overhead</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_cluster_cost.png" alt="OpenShift cluster cost" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>OpenShift cluster cost breakdown</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_cluster_list.png" alt="OpenShift cluster list" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>OpenShift cluster list</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_cost_per_project.png" alt="OpenShift cost per project" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Cost per project with historical data</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_project_history.png" alt="OpenShift project historical data" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Project historical cost trends</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_node_list.png" alt="OpenShift node list" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Node cost allocation</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_tag_list.png" alt="OpenShift per tag list" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Cost breakdown by tag</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_tag_details.png" alt="OpenShift tag details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Tag cost detail view</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/ocp_vm_cost.png" alt="OpenShift Virtualization cost" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>OpenShift Virtualization cost tracking</figcaption>
+      </figure>
+    </div>
+
+    <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 1rem; margin-top: 2.5rem;">Cloud Provider Details</h3>
+    <div class="screenshots-grid">
+      <figure class="screenshot-item">
+        <img src="images/aws_account_details.png" alt="AWS account details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>AWS account cost details</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/aws_service_details.png" alt="AWS service details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>AWS service breakdown</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/gcp_details.png" alt="Google Cloud details" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Google Cloud cost details</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/cost_explorer.png" alt="Cost Explorer" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Cost Explorer with custom date ranges</figcaption>
+      </figure>
+    </div>
+
+    <h3 style="font-family: 'Red Hat Display', sans-serif; font-weight: 600; margin-bottom: 1rem; margin-top: 2.5rem;">Settings &amp; Identity Management</h3>
+    <div class="screenshots-grid">
+      <figure class="screenshot-item">
+        <img src="images/connection_profiles.png" alt="Connection profiles" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Connection profiles with test result</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/settings_cost_models.png" alt="Cost models" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Cost model management</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/settings_cost_model_creation.png" alt="Cost model creation" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Cost model creation wizard</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/settings_platform_projects.png" alt="Platform projects" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Platform project configuration</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/settings_tags.png" alt="Tags and labels" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Tags and labels management</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/iam_navigation.png" alt="IAM navigation" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Identity &amp; Access Management navigation</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/iam_groups.png" alt="IAM groups" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>User groups management</figcaption>
+      </figure>
+      <figure class="screenshot-item">
+        <img src="images/iam_roles.png" alt="IAM roles" loading="lazy" onclick="openLightbox(this)">
+        <figcaption>Role-based access control</figcaption>
       </figure>
     </div>
   </div>
@@ -436,9 +537,9 @@
         <p class="section-label">Connection Profiles</p>
         <h2 class="section-title">One app, many instances</h2>
         <p class="section-subtitle">Save named profiles for Red Hat Hybrid Cloud Console (SaaS) and any number of private on-prem Cost Management instances. Each profile stores its own server URL, authentication method, and credentials. Switch with a single click.</p>
-        <p class="section-subtitle">The built-in SaaS profile is always available and cannot be deleted. Create as many private profiles as you need.</p>
+        <p class="section-subtitle">The built-in SaaS profile is always available and cannot be deleted. Create as many private profiles as you need. Test your connection before saving.</p>
       </div>
-      <img src="images/profile_selection.png" alt="Profile selection dropdown showing SaaS and UXSNO profiles">
+      <img src="images/connection_profiles.png" alt="Connection profile settings with successful connection test">
     </div>
   </div>
 </section>
@@ -447,7 +548,7 @@
 <section class="screenshots-section">
   <div class="section-inner">
     <div class="split split-reverse">
-      <img src="images/authentication_modes.png" alt="Authentication settings showing offline token, username & password, and service account options">
+      <img src="images/user_profile.png" alt="User profile dropdown with account information">
       <div class="split-text">
         <p class="section-label">Authentication</p>
         <h2 class="section-title">Four ways to connect</h2>
